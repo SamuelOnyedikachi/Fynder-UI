@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NSCDC FYNder — Add Agent</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* --- Added for closeable location panel + clickable rows --- */
+    .location-head{ position: relative; }
+    .location-head-actions{ display:flex; align-items:center; gap:10px; }
+
+    .close-location{
+      width:28px; height:28px; border-radius:50%;
+      border:1px solid #e2e2e2; background:#fff; color:#666;
+      font-size:16px; line-height:1; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition: background .15s ease, color .15s ease, border-color .15s ease;
+    }
+    .close-location:hover{ background:#fee2e2; color:#dc2626; border-color:#fca5a5; }
+
+    /* When the layout has "list-only", hide the panel and let the list take full width */
+    .agent-layout.list-only .location-panel{ display:none !important; }
+    .agent-layout.list-only{ grid-template-columns: 1fr !important; }
+
+    /* Make agent names look clickable */
+    .person b{ cursor:pointer; }
+    .person b:hover{ text-decoration:underline; color:#dc2626; }
+
+    /* --- Security Admin dropdown (header, top-right) --- */
+    .top-user{ position: relative; cursor: pointer; user-select: none; }
+    .top-user .top-logout{ display: none; }
+    .top-user-menu{
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 10px;
+      min-width: 150px;
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+      overflow: hidden;
+      z-index: 60;
+    }
+    .top-user.open .top-user-menu{ display: block; }
+    .top-user-menu a{
+      display: block;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: #dc2626;
+      text-decoration: none;
+    }
+    .top-user-menu a:hover{ background: #fef2f2; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- CSS-only modals -->
+  <input class="modal-toggle" id="addModal" type="checkbox">
+  <div class="modal-backdrop">
+    <div class="modal add-modal">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">NSCDC PERSONNEL</div>
+          <h2>Register New Agent</h2>
+          <p>Create a new field personnel record.</p>
+        </div>
+        <label class="close" for="addModal">×</label>
+      </div>
+
+      <div class="form-grid">
+        <div class="field"><label>First Name</label><input placeholder="Enter first name"></div>
+        <div class="field"><label>Last Name</label><input placeholder="Enter last name"></div>
+        <div class="field"><label>Agent ID</label><input placeholder="NSCDC-1042"></div>
+        <div class="field"><label>Rank</label>
+          <select><option>Select rank</option><option>Officer</option><option>Inspector</option><option>Superintendent</option><option>Chief Superintendent</option></select>
+        </div>
+        <div class="field"><label>Unit / Division</label><input placeholder="Enter unit or division"></div>
+        <div class="field"><label>Phone</label><input placeholder="0800 000 0000"></div>
+        <div class="field"><label>State Command</label><input placeholder="Enter command"></div>
+        <div class="field"><label>LGA</label><input placeholder="Enter LGA"></div>
+        <div class="field full"><label>Official Address</label><input placeholder="Enter official address"></div>
+      </div>
+
+      <div class="modal-actions">
+        <label class="btn cancel" for="addModal">Cancel</label>
+        <label class="btn red-btn" for="addModal">Register Agent</label>
+      </div>
+    </div>
+  </div>
+
+  <input class="modal-toggle" id="editModal" type="checkbox">
+  <div class="modal-backdrop">
+    <div class="modal edit-modal">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">AGENT PROFILE</div>
+          <h2>Edit Agent</h2>
+          <p>Update personnel information and review the current field location.</p>
+        </div>
+        <label class="close" for="editModal">×</label>
+      </div>
+
+      <div class="edit-layout">
+        <div class="form-grid">
+          <div class="field"><label>First Name</label><input value="Nkem"></div>
+          <div class="field"><label>Last Name</label><input value="Johnson"></div>
+          <div class="field"><label>Agent ID</label><input value="NSCDC-1042"></div>
+          <div class="field"><label>Rank</label>
+            <select><option selected>Inspector</option><option>Officer</option><option>Superintendent</option></select>
+          </div>
+          <div class="field"><label>Unit / Division</label><input value="Operations"></div>
+          <div class="field"><label>Phone</label><input value="0803 123 4567"></div>
+          <div class="field"><label>State Command</label><input value="Abia State Command"></div>
+          <div class="field"><label>LGA</label><input value="Umuahia North"></div>
+          <div class="field full"><label>Address</label><input value="School Road, Umuahia"></div>
+        </div>
+
+        <div class="edit-map-card">
+          <div class="edit-map-head">
+            <div>
+              <strong>Current Location</strong>
+              <small>Umuahia, Abia State</small>
+            </div>
+            <span class="live-pill"><span></span>Live</span>
+          </div>
+          <div class="map compact-map">
+            <div class="map-road road-a"></div>
+            <div class="map-road road-b"></div>
+            <div class="map-block block-a"></div>
+            <div class="map-block block-b"></div>
+            <div class="map-block block-c"></div>
+            <div class="map-water"></div>
+            <div class="accuracy-ring"></div>
+            <div class="pin"><span>•</span></div>
+            <div class="map-label">Nkem Johnson</div>
+            <div class="map-controls"><span>◎</span><span>＋</span><span>−</span></div>
+          </div>
+          <div class="edit-location-meta">
+            <span>12 km/h</span>
+            <span>78% battery</span>
+            <span>Strong network</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <label class="btn cancel" for="editModal">Cancel</label>
+        <label class="btn red-btn" for="editModal">Save Changes</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="fynder logo.png" alt="NSCDC logo">
+      <div>
+        <b>NSCDC</b>
+        <small>FYNder Agent Platform</small>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a href="dashboard.html"><span class="nav-icon">⌂</span>Dashboard</a>
+      <a class="active" href="agents.html"><span class="nav-icon">♙</span>Add Agent</a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="admin">
+        <div class="avatar">NA</div>
+        <div>
+          <b>NSCDC Admin</b>
+          <small>Administrator</small>
+        </div>
+        
+      </div>
+     
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <header>
+      <div class="org">
+        <img class="org-logo" src="nscdc-logo.png" alt="NSCDC logo">
+        <div>
+          <b>Nigeria Security &amp; Civil Defence Corps</b>
+          <small>FYNder Agent Management</small>
+        </div>
+      </div>
+
+      <div class="search">⌕ &nbsp; Search anything...</div>
+
+      <div class="notif">♧<i class="badge">3</i></div>
+
+      <div class="top-user" id="topUser">
+        <div class="avatar">NA</div>
+        <span>NSCDC Admin</span>
+        <span>⌄</span>
+        <div class="top-user-menu" id="topUserMenu">
+          <a href="dashboard.html">⏻ Log out</a>
+        </div>
+      </div>
+    </header>
+
+    <section class="content">
+      <div class="title-row">
+        <div>
+          <div class="eyebrow">FIELD PERSONNEL</div>
+          <h1>Agents</h1>
+          <p class="subtitle">Manage NSCDC agents and monitor their current locations.</p>
+        </div>
+        <label for="addModal" class="btn red-btn">＋ Add Agent</label>
+      </div>
+
+      <div class="agent-layout" id="agentLayout">
+
+        <!-- Agent list -->
+        <div class="card agent-card">
+          <div class="toolbar">
+            <div class="input-wrap">
+              <span>⌕</span>
+              <input class="input" placeholder="Search agents by name, ID or phone...">
+            </div>
+            <select class="select">
+              <option>All statuses</option>
+              <option>Online</option>
+              <option>On Duty</option>
+              <option>Offline</option>
+            </select>
+            <select class="select">
+              <option>All units</option>
+              <option>Operations</option>
+              <option>Security</option>
+              <option>Field Ops</option>
+              <option>Logistics</option>
+            </select>
+          </div>
+
+          <div class="list-summary">
+            <span><strong>42</strong> registered agents</span>
+            <span><span class="tiny-green"></span> 31 online</span>
+            <span><span class="tiny-gray"></span> 11 offline</span>
+          </div>
+
+          <div class="mobile-scroll">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>AGENT</th>
+                  <th>RANK / UNIT</th>
+                  <th>STATUS</th>
+                  <th>LAST SEEN</th>
+                  <th>ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="selected-row" data-agent="NSCDC-1042">
+                  <td>
+                    <div class="person">
+                      <div class="mini">NJ</div>
+                      <div><b>Nkem Johnson</b><small>NSCDC-1042</small></div>
+                    </div>
+                  </td>
+                  <td>Inspector<br><small>Operations</small></td>
+                  <td><span class="pill green"><span class="dot green-dot"></span>Online</span></td>
+                  <td>2 mins ago</td>
+                  <td class="actions">
+                    <a class="action-btn" href="#location">⌖ View Location</a>
+                    <label class="action-btn" for="editModal">Edit</label>
+                  </td>
+                </tr>
+
+                <tr data-agent="NSCDC-1043">
+                  <td><div class="person"><div class="mini">BO</div><div><b>Bola Okafor</b><small>NSCDC-1043</small></div></div></td>
+                  <td>Officer<br><small>Security</small></td>
+                  <td><span class="pill green"><span class="dot green-dot"></span>Online</span></td>
+                  <td>5 mins ago</td>
+                  <td class="actions"><a class="action-btn" href="#location">⌖ View Location</a><label class="action-btn" for="editModal">Edit</label></td>
+                </tr>
+
+                <tr data-agent="NSCDC-1044">
+                  <td><div class="person"><div class="mini">DO</div><div><b>David Okechukwu</b><small>NSCDC-1044</small></div></div></td>
+                  <td>Inspector<br><small>Field Ops</small></td>
+                  <td><span class="pill amber"><span class="dot amber-dot"></span>On Duty</span></td>
+                  <td>12 mins ago</td>
+                  <td class="actions"><a class="action-btn" href="#location">⌖ View Location</a><label class="action-btn" for="editModal">Edit</label></td>
+                </tr>
+
+                <tr data-agent="NSCDC-1045">
+                  <td><div class="person"><div class="mini">AK</div><div><b>Adaeze Kalu</b><small>NSCDC-1045</small></div></div></td>
+                  <td>Officer<br><small>Operations</small></td>
+                  <td><span class="pill green"><span class="dot green-dot"></span>Online</span></td>
+                  <td>1 min ago</td>
+                  <td class="actions"><a class="action-btn" href="#location">⌖ View Location</a><label class="action-btn" for="editModal">Edit</label></td>
+                </tr>
+
+                <tr data-agent="NSCDC-1046">
+                  <td><div class="person"><div class="mini">MT</div><div><b>Michael Thompson</b><small>NSCDC-1046</small></div></div></td>
+                  <td>Officer<br><small>Logistics</small></td>
+                  <td><span class="pill gray"><span class="dot gray-dot"></span>Offline</span></td>
+                  <td>2 hours ago</td>
+                  <td class="actions"><a class="action-btn" href="#location">⌖ View Location</a><label class="action-btn" for="editModal">Edit</label></td>
+                </tr>
+
+                <tr data-agent="NSCDC-1047">
+                  <td><div class="person"><div class="mini">SL</div><div><b>Sarah Lawson</b><small>NSCDC-1047</small></div></div></td>
+                  <td>Inspector<br><small>Security</small></td>
+                  <td><span class="pill gray"><span class="dot gray-dot"></span>Offline</span></td>
+                  <td>1 day ago</td>
+                  <td class="actions"><a class="action-btn" href="#location">⌖ View Location</a><label class="action-btn" for="editModal">Edit</label></td>
+                </tr>
+
+                <tr data-agent="NSCDC-1048">
+                  <td><div class="person"><div class="mini">CO</div><div><b>Chukwuemeka Obi</b><small>NSCDC-1048</small></div></div></td>
+                  <td>Officer<br><small>Field Ops</small></td>
+                  <td><span class="pill green"><span class="dot green-dot"></span>Online</span></td>
+                  <td>4 mins ago</td>
+                  <td class="actions"><a class="action-btn" href="#location">⌖ View Location</a><label class="action-btn" for="editModal">Edit</label></td>
+                </tr>
+
+                <tr data-agent="NSCDC-1049">
+                  <td><div class="person"><div class="mini">IK</div><div><b>Ifeanyi Kalu</b><small>NSCDC-1049</small></div></div></td>
+                  <td>Inspector<br><small>Operations</small></td>
+                  <td><span class="pill amber"><span class="dot amber-dot"></span>On Duty</span></td>
+                  <td>18 mins ago</td>
+                  <td class="actions"><a class="action-btn" href="#location">⌖ View Location</a><label class="action-btn" for="editModal">Edit</label></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination">
+            <span>Showing 1–8 of 42 agents</span>
+            <div><button>‹</button><button class="current">1</button><button>2</button><button>3</button><button>…</button><button>6</button><button>›</button></div>
+          </div>
+        </div>
+
+        <!-- Location panel -->
+        <div class="card location-panel" id="location">
+          <div class="location-head">
+            <div>
+              <h2 id="locTitle">Nkem Johnson's Location</h2>
+              <div class="online"><span class="live-dot" id="locOnlineDot"></span> <span id="locOnlineText">Currently Online</span></div>
+            </div>
+            <div class="location-head-actions">
+              <span class="live-label">Live ⟲</span>
+              <button type="button" class="close-location" id="closeLocationBtn" aria-label="Close location panel" title="Close">×</button>
+            </div>
+          </div>
+
+          <div class="profile-box">
+            <div class="profile-main">
+              <div class="large-avatar" id="locAvatar">NJ</div>
+              <div>
+                <b id="locName">Nkem Johnson</b>
+                <small id="locRole">NSCDC Agent · Inspector</small>
+              </div>
+              <span class="profile-sync" id="locSync">2 min ago</span>
+            </div>
+
+            <div class="info-grid">
+              <div><label>Agent ID</label><strong id="locId">NSCDC-1042</strong></div>
+              <div><label>Phone</label><strong id="locPhone">0803 123 4567</strong></div>
+              <div><label>Unit</label><strong id="locUnit">Operations</strong></div>
+              <div><label>Status</label><strong class="green-text" id="locStatus">Online</strong></div>
+            </div>
+          </div>
+
+          <div class="map-card">
+            <div class="map-top">
+              <div>
+                <b id="locCity">● Umuahia, Abia State, Nigeria</b>
+                <span id="locAddress">School Road, Umuahia 440101</span>
+              </div>
+              <button class="action-btn">➤ Directions</button>
+            </div>
+
+            <div class="map">
+              <div class="map-road road-a"></div>
+              <div class="map-road road-b"></div>
+              <div class="map-road road-c"></div>
+              <div class="map-block block-a"></div>
+              <div class="map-block block-b"></div>
+              <div class="map-block block-c"></div>
+              <div class="map-block block-d"></div>
+              <div class="map-water"></div>
+              <div class="accuracy-ring"></div>
+              <div class="pin"><span>•</span></div>
+              <div class="map-label" id="locMapLabel">Nkem Johnson</div>
+              <div class="map-controls"><span>◎</span><span>＋</span><span>−</span></div>
+              <div class="map-road-label">Umuahia Central</div>
+              <div class="map-road-label road-label-2">Aba Road</div>
+            </div>
+
+            <div class="location-stats">
+              <div class="loc-stat"><span class="stat-symbol">⌁</span><div><small>Speed</small><b id="locSpeed">12 km/h</b></div></div>
+              <div class="loc-stat"><span class="stat-symbol">◎</span><div><small>Accuracy</small><b id="locAccuracy">High</b></div></div>
+              <div class="loc-stat"><span class="stat-symbol">▮</span><div><small>Battery</small><b id="locBattery">78%</b></div></div>
+              <div class="loc-stat"><span class="stat-symbol">▰</span><div><small>Network</small><b id="locNetwork">Strong</b></div></div>
+            </div>
+          </div>
+
+          <div class="case">
+            <div class="case-title"><span>⚠</span> Safety Status</div>
+            <strong>No active incident</strong>
+            <p>Last safety check: Today, 10:42 AM</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  // Mock per-agent data. In a real app this would come from your backend.
+  var agentData = {
+    "NSCDC-1042": { name:"Nkem Johnson", avatar:"NJ", rank:"Inspector", unit:"Operations", phone:"0803 123 4567", status:"online", lastSeen:"2 min ago", city:"Umuahia, Abia State, Nigeria", address:"School Road, Umuahia 440101", speed:"12 km/h", accuracy:"High", battery:"78%", network:"Strong" },
+    "NSCDC-1043": { name:"Bola Okafor", avatar:"BO", rank:"Officer", unit:"Security", phone:"0805 234 5678", status:"online", lastSeen:"5 min ago", city:"Aba, Abia State, Nigeria", address:"Faulks Road, Aba 453101", speed:"8 km/h", accuracy:"High", battery:"64%", network:"Strong" },
+    "NSCDC-1044": { name:"David Okechukwu", avatar:"DO", rank:"Inspector", unit:"Field Ops", phone:"0807 345 6789", status:"onduty", lastSeen:"12 min ago", city:"Umuahia, Abia State, Nigeria", address:"Library Avenue, Umuahia 440101", speed:"0 km/h", accuracy:"Medium", battery:"45%", network:"Moderate" },
+    "NSCDC-1045": { name:"Adaeze Kalu", avatar:"AK", rank:"Officer", unit:"Operations", phone:"0809 456 7890", status:"online", lastSeen:"1 min ago", city:"Umuahia, Abia State, Nigeria", address:"Ikot Ekpene Road, Umuahia 440101", speed:"20 km/h", accuracy:"High", battery:"91%", network:"Strong" },
+    "NSCDC-1046": { name:"Michael Thompson", avatar:"MT", rank:"Officer", unit:"Logistics", phone:"0812 567 8901", status:"offline", lastSeen:"2 hours ago", city:"Umuahia, Abia State, Nigeria", address:"Last known: Ogurube Street", speed:"0 km/h", accuracy:"Low", battery:"12%", network:"No signal" },
+    "NSCDC-1047": { name:"Sarah Lawson", avatar:"SL", rank:"Inspector", unit:"Security", phone:"0813 678 9012", status:"offline", lastSeen:"1 day ago", city:"Umuahia, Abia State, Nigeria", address:"Last known: Bank Road", speed:"0 km/h", accuracy:"Low", battery:"0%", network:"No signal" },
+    "NSCDC-1048": { name:"Chukwuemeka Obi", avatar:"CO", rank:"Officer", unit:"Field Ops", phone:"0816 789 0123", status:"online", lastSeen:"4 min ago", city:"Umuahia, Abia State, Nigeria", address:"Mission Hill Road, Umuahia 440101", speed:"15 km/h", accuracy:"High", battery:"70%", network:"Strong" },
+    "NSCDC-1049": { name:"Ifeanyi Kalu", avatar:"IK", rank:"Inspector", unit:"Operations", phone:"0817 890 1234", status:"onduty", lastSeen:"18 min ago", city:"Umuahia, Abia State, Nigeria", address:"Government House Road, Umuahia 440101", speed:"5 km/h", accuracy:"Medium", battery:"55%", network:"Moderate" }
+  };
+
+  function statusColor(status){
+    if (status === "online") return "#16a34a";
+    if (status === "onduty") return "#d97706";
+    return "#6b7280";
+  }
+
+  function statusLabel(status){
+    if (status === "online") return "Online";
+    if (status === "onduty") return "On Duty";
+    return "Offline";
+  }
+
+  function onlineLineLabel(status){
+    if (status === "online") return "Currently Online";
+    if (status === "onduty") return "Currently On Duty";
+    return "Currently Offline";
+  }
+
+  function renderLocation(agentId){
+    var data = agentData[agentId];
+    if (!data) return;
+
+    document.getElementById("locName").textContent = data.name;
+    document.getElementById("locAvatar").textContent = data.avatar;
+    document.getElementById("locRole").textContent = "NSCDC Agent · " + data.rank;
+    document.getElementById("locSync").textContent = data.lastSeen;
+    document.getElementById("locId").textContent = agentId;
+    document.getElementById("locPhone").textContent = data.phone;
+    document.getElementById("locUnit").textContent = data.unit;
+
+    var statusEl = document.getElementById("locStatus");
+    statusEl.textContent = statusLabel(data.status);
+    statusEl.style.color = statusColor(data.status);
+
+    document.getElementById("locTitle").textContent = data.name + "'s Location";
+    document.getElementById("locOnlineText").textContent = onlineLineLabel(data.status);
+    document.getElementById("locOnlineDot").style.background = statusColor(data.status);
+
+    document.getElementById("locCity").textContent = "● " + data.city;
+    document.getElementById("locAddress").textContent = data.address;
+    document.getElementById("locMapLabel").textContent = data.name;
+
+    document.getElementById("locSpeed").textContent = data.speed;
+    document.getElementById("locAccuracy").textContent = data.accuracy;
+    document.getElementById("locBattery").textContent = data.battery;
+    document.getElementById("locNetwork").textContent = data.network;
+
+    // Highlight the selected row
+    document.querySelectorAll(".table tbody tr").forEach(function(tr){
+      tr.classList.remove("selected-row");
+    });
+    var row = document.querySelector('tr[data-agent="' + agentId + '"]');
+    if (row) row.classList.add("selected-row");
+
+    // Make sure the panel is visible
+    var layout = document.getElementById("agentLayout");
+    layout.classList.remove("list-only");
+
+    // Bring the panel into view (useful on mobile / narrow screens)
+    document.getElementById("location").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  document.querySelectorAll(".table tbody tr").forEach(function(tr){
+    var agentId = tr.getAttribute("data-agent");
+
+    var nameEl = tr.querySelector(".person b");
+    if (nameEl) {
+      nameEl.addEventListener("click", function(){ renderLocation(agentId); });
+    }
+
+    var viewBtn = tr.querySelector('a.action-btn[href="#location"]');
+    if (viewBtn) {
+      viewBtn.addEventListener("click", function(e){
+        e.preventDefault();
+        renderLocation(agentId);
+      });
+    }
+  });
+
+  var closeBtn = document.getElementById("closeLocationBtn");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", function(){
+      document.getElementById("agentLayout").classList.add("list-only");
+    });
+  }
+
+  // Security Admin dropdown (header, top-right)
+  var topUser = document.getElementById("topUser");
+  if (topUser) {
+    topUser.addEventListener("click", function(e){
+      e.stopPropagation();
+      topUser.classList.toggle("open");
+    });
+    // Close it when clicking anywhere else on the page
+    document.addEventListener("click", function(){
+      topUser.classList.remove("open");
+    });
+    // Prevent clicks inside the menu itself from closing it before the link fires
+    var topUserMenu = document.getElementById("topUserMenu");
+    if (topUserMenu) {
+      topUserMenu.addEventListener("click", function(e){ e.stopPropagation(); });
+    }
+  }
+</script>
+
+</body>
+</html>

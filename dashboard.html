@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>NSCDC FYNder — Dashboard</title>
+
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    /* --- Admin dropdown (header, top-right) — same pattern as agents.html --- */
+    .top-user{ position: relative; cursor: pointer; user-select: none; }
+    .top-user-menu{
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 10px;
+      min-width: 150px;
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+      overflow: hidden;
+      z-index: 60;
+    }
+    .top-user.open .top-user-menu{ display: block; }
+    .top-user-menu a{
+      display: block;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: #dc2626;
+      text-decoration: none;
+    }
+    .top-user-menu a:hover{ background: #fef2f2; }
+  </style>
+
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- =========================
+       SIDEBAR
+  ========================== -->
+  <aside class="sidebar">
+
+    <div class="brand">
+      <img
+        src="fynder logo.png"
+        alt="NSCDC Logo"
+        class="brand-logo"
+      >
+
+      <div class="brand-text">
+        <strong>NSCDC</strong>
+        <span>FYNder Agent Platform</span>
+      </div>
+    </div>
+
+
+    <!-- Navigation -->
+    <nav class="nav">
+
+      <a href="dashboard.html" class="nav-link active">
+        <span class="nav-icon">⌂</span>
+        <span>Dashboard</span>
+      </a>
+
+      <a href="agents.html" class="nav-link">
+        <span class="nav-icon">♙</span>
+        <span>Add Agent</span>
+      </a>
+
+    </nav>
+
+
+    <!-- Sidebar bottom -->
+    <div class="sidebar-bottom">
+
+      <div class="admin-card">
+
+        <div class="avatar">
+          NA
+        </div>
+
+        <div class="admin-info">
+          <strong>NSCDC Admin</strong>
+          <span>Administrator</span>
+        </div>
+
+        
+
+      </div>
+      </a>
+
+    </div>
+
+  </aside>
+
+
+
+  <!-- =========================
+       MAIN AREA
+  ========================== -->
+  <main class="main">
+
+    <!-- =========================
+         TOP HEADER
+    ========================== -->
+    <header class="top-header">
+
+      <div class="organization">
+
+        <img
+          src="nscdc-logo.png"
+          alt="NSCDC"
+          class="organization-logo"
+        >
+
+        <div class="organization-text">
+          <strong>Nigeria Security &amp; Civil Defence Corps</strong>
+          <span>FYNder Agent Management</span>
+        </div>
+
+      </div>
+
+
+      <!-- Search -->
+      <div class="top-search">
+        <span class="search-icon">⌕</span>
+        <span>Search anything...</span>
+      </div>
+
+
+      <!-- Notification -->
+      <div class="notification">
+
+        <span class="notification-icon">♧</span>
+
+        <span class="notification-badge">
+          3
+        </span>
+
+      </div>
+
+
+      <!-- User -->
+      <div class="top-user" id="topUser">
+
+        <div class="top-avatar">
+          NA
+        </div>
+
+        <span class="top-user-name">
+          NSCDC Admin
+        </span>
+
+        <span class="top-user-arrow">
+          ⌄
+        </span>
+
+        <div class="top-user-menu" id="topUserMenu">
+          <a href="#">⏻ Log out</a>
+        </div>
+
+      </div>
+
+    </header>
+
+
+
+    <!-- =========================
+         PAGE CONTENT
+    ========================== -->
+    <section class="content">
+
+
+      <!-- Page title -->
+      <div class="page-title">
+
+        <div>
+          <h1>Dashboard</h1>
+
+          <p>
+            Monitor and manage NSCDC field agents.
+          </p>
+        </div>
+
+      </div>
+
+
+
+      <!-- =========================
+           STATISTICS
+      ========================== -->
+      <div class="stats-grid">
+
+
+        <!-- Total Agents -->
+        <div class="stat-card stat-red-one">
+
+          <div class="stat-content">
+
+            <span class="stat-label">
+              Total Agents
+            </span>
+
+            <strong class="stat-number">
+              428
+            </strong>
+
+            <span class="stat-description">
+              Registered personnel
+            </span>
+
+          </div>
+
+          <div class="stat-icon">
+            ♙
+          </div>
+
+        </div>
+
+
+
+        <!-- Active Agents -->
+        <div class="stat-card stat-red-two">
+
+          <div class="stat-content">
+
+            <span class="stat-label">
+              Active Agents
+            </span>
+
+            <strong class="stat-number">
+              391
+            </strong>
+
+            <span class="stat-description">
+              Currently active
+            </span>
+
+          </div>
+
+          <div class="stat-icon">
+            ✓
+          </div>
+
+        </div>
+
+
+
+        <!-- Online Agents -->
+        <div class="stat-card stat-red-three">
+
+          <div class="stat-content">
+
+            <span class="stat-label">
+              Agents Online
+            </span>
+
+            <strong class="stat-number">
+              146
+            </strong>
+
+            <span class="stat-description">
+              Currently connected
+            </span>
+
+          </div>
+
+          <div class="stat-icon">
+            ●
+          </div>
+
+        </div>
+
+
+
+        <!-- Attention -->
+        <div class="stat-card stat-red-four">
+
+          <div class="stat-content">
+
+            <span class="stat-label">
+              Needs Attention
+            </span>
+
+            <strong class="stat-number">
+              7
+            </strong>
+
+            <span class="stat-description">
+              Records requiring review
+            </span>
+
+          </div>
+
+          <div class="stat-icon">
+            !
+          </div>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- =========================
+           DASHBOARD LOWER SECTION
+      ========================== -->
+      <div class="dashboard-grid">
+
+
+        <!-- =========================
+             RECENT ACTIVITIES
+        ========================== -->
+        <div class="dashboard-card">
+
+          <div class="card-header">
+
+            <div>
+              <h2>Recent Activities</h2>
+
+              <p>
+                Latest agent and system activity.
+              </p>
+            </div>
+
+          </div>
+
+
+          <!-- Activity 1 -->
+          <div class="activity-row">
+
+            <div class="activity-icon activity-green">
+              ✓
+            </div>
+
+            <div class="activity-content">
+
+              <strong>
+                Nkem Johnson
+              </strong>
+
+              <span>
+                checked in for duty
+              </span>
+
+              <small>
+                Today, 10:42 AM · Umuahia Command
+              </small>
+
+            </div>
+
+          </div>
+
+
+          <!-- Activity 2 -->
+          <div class="activity-row">
+
+            <div class="activity-icon activity-red">
+              ＋
+            </div>
+
+            <div class="activity-content">
+
+              <strong>
+                David Okechukwu
+              </strong>
+
+              <span>
+                was registered as a new agent
+              </span>
+
+              <small>
+                Today, 10:18 AM · NSCDC Admin
+              </small>
+
+            </div>
+
+          </div>
+
+
+          <!-- Activity 3 -->
+          <div class="activity-row">
+
+            <div class="activity-icon activity-amber">
+              !
+            </div>
+
+            <div class="activity-content">
+
+              <strong>
+                Bola Okafor
+              </strong>
+
+              <span>
+                agent record requires review
+              </span>
+
+              <small>
+                Today, 9:51 AM · Personnel Records
+              </small>
+
+            </div>
+
+          </div>
+
+
+          <!-- Activity 4 -->
+          <div class="activity-row">
+
+            <div class="activity-icon activity-green">
+              ●
+            </div>
+
+            <div class="activity-content">
+
+              <strong>
+                Chukwuemeka Obi
+              </strong>
+
+              <span>
+                came online
+              </span>
+
+              <small>
+                Today, 9:27 AM · Field Operations
+              </small>
+
+            </div>
+
+          </div>
+
+
+          <!-- Activity 5 -->
+          <div class="activity-row">
+
+            <div class="activity-icon activity-red">
+              ↻
+            </div>
+
+            <div class="activity-content">
+
+              <strong>
+                Agent NSCDC-1038
+              </strong>
+
+              <span>
+                profile information was updated
+              </span>
+
+              <small>
+                Yesterday, 5:36 PM · Administration
+              </small>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- =========================
+             AGENT STATUS
+        ========================== -->
+        <div class="dashboard-card">
+
+          <div class="card-header">
+
+            <div>
+              <h2>Agent Status</h2>
+
+              <p>
+                Current operational overview.
+              </p>
+            </div>
+
+          </div>
+
+
+          <!-- Active -->
+          <div class="status-row">
+
+            <div class="status-name">
+
+              <span class="status-dot dot-green"></span>
+
+              <span>
+                Active
+              </span>
+
+            </div>
+
+            <strong>
+              391
+            </strong>
+
+          </div>
+
+
+          <!-- Online -->
+          <div class="status-row">
+
+            <div class="status-name">
+
+              <span class="status-dot dot-green"></span>
+
+              <span>
+                Online
+              </span>
+
+            </div>
+
+            <strong>
+              146
+            </strong>
+
+          </div>
+
+
+          <!-- Review -->
+          <div class="status-row">
+
+            <div class="status-name">
+
+              <span class="status-dot dot-amber"></span>
+
+              <span>
+                On Review
+              </span>
+
+            </div>
+
+            <strong>
+              7
+            </strong>
+
+          </div>
+
+
+          <!-- Inactive -->
+          <div class="status-row">
+
+            <div class="status-name">
+
+              <span class="status-dot dot-gray"></span>
+
+              <span>
+                Inactive
+              </span>
+
+            </div>
+
+            <strong>
+              30
+            </strong>
+
+          </div>
+
+
+          <!-- Quick links -->
+          <div class="quick-links">
+
+            <a href="agents.html">
+              ＋ &nbsp; Add Agent
+            </a>
+
+            <a href="agents.html">
+              ♙ &nbsp; Agent List
+            </a>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+</div>
+
+<script>
+  // Security/NSCDC Admin dropdown (header, top-right) — same behavior as agents.html
+  var topUser = document.getElementById("topUser");
+  if (topUser) {
+    topUser.addEventListener("click", function(e){
+      e.stopPropagation();
+      topUser.classList.toggle("open");
+    });
+    // Close it when clicking anywhere else on the page
+    document.addEventListener("click", function(){
+      topUser.classList.remove("open");
+    });
+    // Prevent clicks inside the menu itself from closing it before the link fires
+    var topUserMenu = document.getElementById("topUserMenu");
+    if (topUserMenu) {
+      topUserMenu.addEventListener("click", function(e){ e.stopPropagation(); });
+    }
+  }
+</script>
+
+</body>
+</html>
