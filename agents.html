@@ -53,51 +53,6 @@
       text-decoration: none;
     }
     .top-user-menu a:hover{ background: #fef2f2; }
-
-    /* --- Notification bell: vibrate + dropdown --- */
-    .notif{ position: relative; cursor: pointer; }
-    .notif-bell-icon{ display: inline-block; }
-    @keyframes bellShake{
-      0%,100%{ transform: rotate(0); }
-      10%,30%,50%,70%{ transform: rotate(-14deg); }
-      20%,40%,60%{ transform: rotate(14deg); }
-      80%{ transform: rotate(-7deg); }
-      90%{ transform: rotate(7deg); }
-    }
-    .notif.shake .notif-bell-icon{ animation: bellShake .6s ease-in-out; }
-    .notif-menu{
-      display: none;
-      position: absolute;
-      top: 100%;
-      right: 0;
-      margin-top: 12px;
-      width: 270px;
-      background: #fff;
-      border: 1px solid #eee;
-      border-radius: 12px;
-      box-shadow: 0 10px 28px rgba(0,0,0,0.12);
-      overflow: hidden;
-      z-index: 70;
-      cursor: default;
-    }
-    .notif.open .notif-menu{ display: block; }
-    .notif-menu-header{
-      padding: 10px 14px; font-size: 12px; font-weight: 700; letter-spacing: .03em;
-      text-transform: uppercase; color: #999; border-bottom: 1px solid #f2f2f2;
-    }
-    .notif-item{
-      display: flex; gap: 8px; align-items: flex-start; padding: 10px 14px;
-      text-decoration: none; color: #1a1a1a; border-bottom: 1px solid #f7f7f7;
-    }
-    .notif-item:hover{ background: #fef2f2; }
-    .notif-item .notif-icon{ font-size: 16px; margin-top: 1px; }
-    .notif-item-title{ font-size: 13px; font-weight: 600; }
-    .notif-item-sub{ font-size: 12px; color: #999; margin-top: 1px; }
-    .notif-view-all{
-      display: block; text-align: center; padding: 10px; font-size: 13px;
-      font-weight: 600; color: #dc2626; text-decoration: none;
-    }
-    .notif-view-all:hover{ background: #fef2f2; }
   </style>
 </head>
 <body>
@@ -213,7 +168,6 @@
     <nav class="nav">
       <a href="dashboard.html"><span class="nav-icon">⌂</span>Dashboard</a>
       <a class="active" href="agents.html"><span class="nav-icon">♙</span>Add Agent</a>
-      <a href="alerts.html"><span class="nav-icon">⚠</span>Alert Log</a>
     </nav>
 
     <div class="sidebar-bottom">
@@ -242,34 +196,7 @@
 
       <div class="search">⌕ &nbsp; Search anything...</div>
 
-      <div class="notif" id="notifBell">
-        <span class="notif-bell-icon">🔔</span><i class="badge" id="notifBadge">3</i>
-        <div class="notif-menu" id="notifMenu">
-          <div class="notif-menu-header">Recent reports</div>
-          <a class="notif-item" href="alerts.html#ALT-00124">
-            <span class="notif-icon">🏫</span>
-            <div>
-              <div class="notif-item-title">School Attack reported</div>
-              <div class="notif-item-sub">Umuahia North · Critical · 10:42 AM</div>
-            </div>
-          </a>
-          <a class="notif-item" href="alerts.html#ALT-00123">
-            <span class="notif-icon">🧒</span>
-            <div>
-              <div class="notif-item-title">Missing Child reported</div>
-              <div class="notif-item-sub">Aba South · High · 9:17 AM</div>
-            </div>
-          </a>
-          <a class="notif-item" href="alerts.html#ALT-00121">
-            <span class="notif-icon">🏫</span>
-            <div>
-              <div class="notif-item-title">School Attack reported</div>
-              <div class="notif-item-sub">Ohafia · High · 8:30 AM</div>
-            </div>
-          </a>
-          <a class="notif-view-all" href="alerts.html">View all alerts</a>
-        </div>
-      </div>
+      <div class="notif">♧<i class="badge">3</i></div>
 
       <div class="top-user" id="topUser">
         <div class="avatar">NA</div>
@@ -298,20 +225,20 @@
           <div class="toolbar">
             <div class="input-wrap">
               <span>⌕</span>
-              <input class="input" id="agentSearchInput" placeholder="Search agents by name, ID or phone...">
+              <input class="input" placeholder="Search agents by name, ID or phone...">
             </div>
-            <select class="select" id="agentStatusFilter">
-              <option value="all">All statuses</option>
-              <option value="online">Online</option>
-              <option value="onduty">On Duty</option>
-              <option value="offline">Offline</option>
+            <select class="select">
+              <option>All statuses</option>
+              <option>Online</option>
+              <option>On Duty</option>
+              <option>Offline</option>
             </select>
-            <select class="select" id="agentUnitFilter">
-              <option value="all">All units</option>
-              <option value="Operations">Operations</option>
-              <option value="Security">Security</option>
-              <option value="Field Ops">Field Ops</option>
-              <option value="Logistics">Logistics</option>
+            <select class="select">
+              <option>All units</option>
+              <option>Operations</option>
+              <option>Security</option>
+              <option>Field Ops</option>
+              <option>Logistics</option>
             </select>
           </div>
 
@@ -332,8 +259,8 @@
                   <th>ACTIONS</th>
                 </tr>
               </thead>
-              <tbody id="agentTableBody">
-                <tr class="selected-row" data-agent="NSCDC-1042" data-status="online" data-unit="Operations">
+              <tbody>
+                <tr class="selected-row" data-agent="NSCDC-1042">
                   <td>
                     <div class="person">
                       <div class="mini">NJ</div>
@@ -349,7 +276,7 @@
                   </td>
                 </tr>
 
-                <tr data-agent="NSCDC-1043" data-status="online" data-unit="Security">
+                <tr data-agent="NSCDC-1043">
                   <td><div class="person"><div class="mini">BO</div><div><b>Bola Okafor</b><small>NSCDC-1043</small></div></div></td>
                   <td>Officer<br><small>Security</small></td>
                   <td><span class="pill green"><span class="dot green-dot"></span>Online</span></td>
@@ -357,7 +284,7 @@
                   <td class="actions"><a class="action-btn" href="#location">⌖ View Location</a><label class="action-btn" for="editModal">Edit</label></td>
                 </tr>
 
-                <tr data-agent="NSCDC-1044" data-status="onduty" data-unit="Field Ops">
+                <tr data-agent="NSCDC-1044">
                   <td><div class="person"><div class="mini">DO</div><div><b>David Okechukwu</b><small>NSCDC-1044</small></div></div></td>
                   <td>Inspector<br><small>Field Ops</small></td>
                   <td><span class="pill amber"><span class="dot amber-dot"></span>On Duty</span></td>
@@ -365,7 +292,7 @@
                   <td class="actions"><a class="action-btn" href="#location">⌖ View Location</a><label class="action-btn" for="editModal">Edit</label></td>
                 </tr>
 
-                <tr data-agent="NSCDC-1045" data-status="online" data-unit="Operations">
+                <tr data-agent="NSCDC-1045">
                   <td><div class="person"><div class="mini">AK</div><div><b>Adaeze Kalu</b><small>NSCDC-1045</small></div></div></td>
                   <td>Officer<br><small>Operations</small></td>
                   <td><span class="pill green"><span class="dot green-dot"></span>Online</span></td>
@@ -373,7 +300,7 @@
                   <td class="actions"><a class="action-btn" href="#location">⌖ View Location</a><label class="action-btn" for="editModal">Edit</label></td>
                 </tr>
 
-                <tr data-agent="NSCDC-1046" data-status="offline" data-unit="Logistics">
+                <tr data-agent="NSCDC-1046">
                   <td><div class="person"><div class="mini">MT</div><div><b>Michael Thompson</b><small>NSCDC-1046</small></div></div></td>
                   <td>Officer<br><small>Logistics</small></td>
                   <td><span class="pill gray"><span class="dot gray-dot"></span>Offline</span></td>
@@ -381,7 +308,7 @@
                   <td class="actions"><a class="action-btn" href="#location">⌖ View Location</a><label class="action-btn" for="editModal">Edit</label></td>
                 </tr>
 
-                <tr data-agent="NSCDC-1047" data-status="offline" data-unit="Security">
+                <tr data-agent="NSCDC-1047">
                   <td><div class="person"><div class="mini">SL</div><div><b>Sarah Lawson</b><small>NSCDC-1047</small></div></div></td>
                   <td>Inspector<br><small>Security</small></td>
                   <td><span class="pill gray"><span class="dot gray-dot"></span>Offline</span></td>
@@ -389,7 +316,7 @@
                   <td class="actions"><a class="action-btn" href="#location">⌖ View Location</a><label class="action-btn" for="editModal">Edit</label></td>
                 </tr>
 
-                <tr data-agent="NSCDC-1048" data-status="online" data-unit="Field Ops">
+                <tr data-agent="NSCDC-1048">
                   <td><div class="person"><div class="mini">CO</div><div><b>Chukwuemeka Obi</b><small>NSCDC-1048</small></div></div></td>
                   <td>Officer<br><small>Field Ops</small></td>
                   <td><span class="pill green"><span class="dot green-dot"></span>Online</span></td>
@@ -397,7 +324,7 @@
                   <td class="actions"><a class="action-btn" href="#location">⌖ View Location</a><label class="action-btn" for="editModal">Edit</label></td>
                 </tr>
 
-                <tr data-agent="NSCDC-1049" data-status="onduty" data-unit="Operations">
+                <tr data-agent="NSCDC-1049">
                   <td><div class="person"><div class="mini">IK</div><div><b>Ifeanyi Kalu</b><small>NSCDC-1049</small></div></div></td>
                   <td>Inspector<br><small>Operations</small></td>
                   <td><span class="pill amber"><span class="dot amber-dot"></span>On Duty</span></td>
@@ -590,40 +517,6 @@
     });
   }
 
-  // Live search + status/unit filters for the agent table
-  function applyAgentFilters(){
-    var search = (document.getElementById("agentSearchInput").value || "").trim().toLowerCase();
-    var statusVal = document.getElementById("agentStatusFilter").value;
-    var unitVal = document.getElementById("agentUnitFilter").value;
-    var rows = document.querySelectorAll("#agentTableBody tr[data-agent]");
-    var visibleCount = 0;
-
-    rows.forEach(function(tr){
-      var matchesSearch = !search || tr.textContent.toLowerCase().indexOf(search) !== -1;
-      var matchesStatus = statusVal === "all" || tr.getAttribute("data-status") === statusVal;
-      var matchesUnit = unitVal === "all" || tr.getAttribute("data-unit") === unitVal;
-      var show = matchesSearch && matchesStatus && matchesUnit;
-      tr.style.display = show ? "" : "none";
-      if (show) visibleCount++;
-    });
-
-    var noResultsRow = document.getElementById("noAgentResultsRow");
-    if (visibleCount === 0) {
-      if (!noResultsRow) {
-        noResultsRow = document.createElement("tr");
-        noResultsRow.id = "noAgentResultsRow";
-        noResultsRow.innerHTML = '<td colspan="5" style="text-align:center; color:#999; padding:24px;">No agents match your search or filters.</td>';
-        document.getElementById("agentTableBody").appendChild(noResultsRow);
-      }
-    } else if (noResultsRow) {
-      noResultsRow.remove();
-    }
-  }
-
-  document.getElementById("agentSearchInput").addEventListener("input", applyAgentFilters);
-  document.getElementById("agentStatusFilter").addEventListener("change", applyAgentFilters);
-  document.getElementById("agentUnitFilter").addEventListener("change", applyAgentFilters);
-
   // Security Admin dropdown (header, top-right)
   var topUser = document.getElementById("topUser");
   if (topUser) {
@@ -641,33 +534,6 @@
       topUserMenu.addEventListener("click", function(e){ e.stopPropagation(); });
     }
   }
-
-  // Notification bell: dropdown + vibrate on new report
-  var notifBell = document.getElementById("notifBell");
-  var notifMenu = document.getElementById("notifMenu");
-  if (notifBell) {
-    notifBell.addEventListener("click", function(e){
-      e.stopPropagation();
-      notifBell.classList.toggle("open");
-    });
-    document.addEventListener("click", function(){
-      notifBell.classList.remove("open");
-    });
-    if (notifMenu) {
-      notifMenu.addEventListener("click", function(e){ e.stopPropagation(); });
-    }
-  }
-
-  function shakeNotifBell(){
-    if (!notifBell) return;
-    notifBell.classList.add("shake");
-    setTimeout(function(){ notifBell.classList.remove("shake"); }, 650);
-  }
-
-  // Simulates a new report coming in. Replace with a real trigger
-  // (e.g. a websocket "new_alert" event) when this connects to a backend.
-  setTimeout(shakeNotifBell, 3000);
-  setInterval(shakeNotifBell, 20000);
 </script>
 
 </body>

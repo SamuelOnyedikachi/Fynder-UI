@@ -34,51 +34,6 @@
       text-decoration: none;
     }
     .top-user-menu a:hover{ background: #fef2f2; }
-
-    /* --- Notification bell: vibrate + dropdown --- */
-    .notification{ position: relative; cursor: pointer; }
-    .notif-bell-icon{ display: inline-block; }
-    @keyframes bellShake{
-      0%,100%{ transform: rotate(0); }
-      10%,30%,50%,70%{ transform: rotate(-14deg); }
-      20%,40%,60%{ transform: rotate(14deg); }
-      80%{ transform: rotate(-7deg); }
-      90%{ transform: rotate(7deg); }
-    }
-    .notification.shake .notif-bell-icon{ animation: bellShake .6s ease-in-out; }
-    .notif-menu{
-      display: none;
-      position: absolute;
-      top: 100%;
-      right: 0;
-      margin-top: 12px;
-      width: 270px;
-      background: #fff;
-      border: 1px solid #eee;
-      border-radius: 12px;
-      box-shadow: 0 10px 28px rgba(0,0,0,0.12);
-      overflow: hidden;
-      z-index: 70;
-      cursor: default;
-    }
-    .notification.open .notif-menu{ display: block; }
-    .notif-menu-header{
-      padding: 10px 14px; font-size: 12px; font-weight: 700; letter-spacing: .03em;
-      text-transform: uppercase; color: #999; border-bottom: 1px solid #f2f2f2;
-    }
-    .notif-item{
-      display: flex; gap: 8px; align-items: flex-start; padding: 10px 14px;
-      text-decoration: none; color: #1a1a1a; border-bottom: 1px solid #f7f7f7;
-    }
-    .notif-item:hover{ background: #fef2f2; }
-    .notif-item .notif-icon{ font-size: 16px; margin-top: 1px; }
-    .notif-item-title{ font-size: 13px; font-weight: 600; }
-    .notif-item-sub{ font-size: 12px; color: #999; margin-top: 1px; }
-    .notif-view-all{
-      display: block; text-align: center; padding: 10px; font-size: 13px;
-      font-weight: 600; color: #dc2626; text-decoration: none;
-    }
-    .notif-view-all:hover{ background: #fef2f2; }
   </style>
 
 </head>
@@ -119,11 +74,6 @@
         <span>Add Agent</span>
       </a>
 
-      <a href="alerts.html" class="nav-link">
-        <span class="nav-icon">⚠</span>
-        <span>Alert Log</span>
-      </a>
-
     </nav>
 
 
@@ -144,8 +94,6 @@
         
 
       </div>
-
-      
       </a>
 
     </div>
@@ -188,39 +136,13 @@
 
 
       <!-- Notification -->
-      <div class="notification" id="notifBell">
+      <div class="notification">
 
-        <span class="notif-bell-icon">🔔</span>
+        <span class="notification-icon">♧</span>
 
-        <span class="notification-badge" id="notifBadge">
+        <span class="notification-badge">
           3
         </span>
-
-        <div class="notif-menu" id="notifMenu">
-          <div class="notif-menu-header">Recent reports</div>
-          <a class="notif-item" href="alerts.html#ALT-00124">
-            <span class="notif-icon">🏫</span>
-            <div>
-              <div class="notif-item-title">School Attack reported</div>
-              <div class="notif-item-sub">Umuahia North · Critical · 10:42 AM</div>
-            </div>
-          </a>
-          <a class="notif-item" href="alerts.html#ALT-00123">
-            <span class="notif-icon">🧒</span>
-            <div>
-              <div class="notif-item-title">Missing Child reported</div>
-              <div class="notif-item-sub">Aba South · High · 9:17 AM</div>
-            </div>
-          </a>
-          <a class="notif-item" href="alerts.html#ALT-00121">
-            <span class="notif-icon">🏫</span>
-            <div>
-              <div class="notif-item-title">School Attack reported</div>
-              <div class="notif-item-sub">Ohafia · High · 8:30 AM</div>
-            </div>
-          </a>
-          <a class="notif-view-all" href="alerts.html">View all alerts</a>
-        </div>
 
       </div>
 
@@ -683,33 +605,6 @@
       topUserMenu.addEventListener("click", function(e){ e.stopPropagation(); });
     }
   }
-
-  // Notification bell: dropdown + vibrate on new report
-  var notifBell = document.getElementById("notifBell");
-  var notifMenu = document.getElementById("notifMenu");
-  if (notifBell) {
-    notifBell.addEventListener("click", function(e){
-      e.stopPropagation();
-      notifBell.classList.toggle("open");
-    });
-    document.addEventListener("click", function(){
-      notifBell.classList.remove("open");
-    });
-    if (notifMenu) {
-      notifMenu.addEventListener("click", function(e){ e.stopPropagation(); });
-    }
-  }
-
-  function shakeNotifBell(){
-    if (!notifBell) return;
-    notifBell.classList.add("shake");
-    setTimeout(function(){ notifBell.classList.remove("shake"); }, 650);
-  }
-
-  // Simulates a new report coming in. Replace with a real trigger
-  // (e.g. a websocket "new_alert" event) when this connects to a backend.
-  setTimeout(shakeNotifBell, 3000);
-  setInterval(shakeNotifBell, 20000);
 </script>
 
 </body>
