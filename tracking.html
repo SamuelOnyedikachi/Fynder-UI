@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NSCDC FYNder — Tracking Sessions</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    /* ---------- shared header dropdowns (same pattern as other pages) ---------- */
+    .top-user{ position: relative; cursor: pointer; user-select: none; }
+    .top-user-menu{
+      display: none; position: absolute; top: 100%; right: 0; margin-top: 10px;
+      min-width: 150px; background: #1a1c20; border: 1px solid #2a2c31; border-radius: 10px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.4); overflow: hidden; z-index: 60;
+    }
+    .top-user.open .top-user-menu{ display: block; }
+    .top-user-menu a{ display: block; padding: 10px 14px; font-size: 14px; color: #f87171; text-decoration: none; }
+    .top-user-menu a:hover{ background: #24262b; }
+
+    .notif{ position: relative; cursor: pointer; }
+    .notif-bell-icon{ display: inline-block; }
+    @keyframes bellShake{
+      0%,100%{ transform: rotate(0); }
+      10%,30%,50%,70%{ transform: rotate(-14deg); }
+      20%,40%,60%{ transform: rotate(14deg); }
+      80%{ transform: rotate(-7deg); }
+      90%{ transform: rotate(7deg); }
+    }
+    .notif.shake .notif-bell-icon{ animation: bellShake .6s ease-in-out; }
+    .notif-menu{
+      display: none; position: absolute; top: 100%; right: 0; margin-top: 12px; width: 270px;
+      background: #1a1c20; border: 1px solid #2a2c31; border-radius: 12px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.4); overflow: hidden; z-index: 70; cursor: default;
+    }
+    .notif.open .notif-menu{ display: block; }
+    .notif-menu-header{
+      padding: 10px 14px; font-size: 12px; font-weight: 700; letter-spacing: .03em;
+      text-transform: uppercase; color: #8b8d93; border-bottom: 1px solid #24262b;
+    }
+    .notif-item{
+      display: flex; gap: 8px; align-items: flex-start; padding: 10px 14px;
+      text-decoration: none; color: #f2f2f2; border-bottom: 1px solid #24262b;
+    }
+    .notif-item:hover{ background: #24262b; }
+    .notif-item .notif-icon{ font-size: 16px; margin-top: 1px; }
+    .notif-item-title{ font-size: 13px; font-weight: 600; }
+    .notif-item-sub{ font-size: 12px; color: #8b8d93; margin-top: 1px; }
+    .notif-view-all{ display: block; text-align: center; padding: 10px; font-size: 13px; font-weight: 600; color: #f87171; text-decoration: none; }
+    .notif-view-all:hover{ background: #24262b; }
+
+    /* ---------- dark "ops" theme for this page only ---------- */
+    .main{ background:#0e0f11 !important; }
+    header{ background:#141518 !important; border-bottom:1px solid #24262b !important; }
+    header .org b{ color:#f2f2f2 !important; }
+    header .org small{ color:#8b8d93 !important; }
+    header .search{ background:#1a1c20 !important; border:1px solid #2a2c31 !important; color:#8b8d93 !important; }
+    header .notif{ color:#f2f2f2 !important; }
+    header .top-user{ color:#f2f2f2 !important; }
+    header .top-user .avatar{ background:#dc2626 !important; color:#fff !important; }
+
+    .content{ color:#f2f2f2; }
+    .track-title-row{ display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:14px; margin-bottom:20px; }
+    .track-title-row .eyebrow{ color:#f87171; }
+    .track-title-row h1{ color:#f5f5f5; margin:2px 0 4px 0; }
+    .track-title-row .subtitle{ color:#9a9ca1; }
+
+    .track-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+    .track-action-btn{
+      display:flex; align-items:center; gap:6px; padding:0 14px; height:36px;
+      background:#1a1c20; border:1px solid #2a2c31; color:#e7e7e7; border-radius:9px;
+      font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap;
+    }
+    .track-action-btn:hover{ background:#24262b; border-color:#3a3c42; }
+    .track-action-btn.primary{ background:#dc2626; border-color:#dc2626; color:#fff; }
+    .track-action-btn.primary:hover{ background:#b91c1c; }
+
+    .track-stats{ display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px; }
+    .track-stat-card{
+      background:#17181c; border:1px solid #24262b; border-radius:14px; padding:18px;
+    }
+    .track-stat-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .track-stat-label{ font-size:13px; color:#9a9ca1; }
+    .track-stat-updated{ font-size:11px; background:#1f2125; color:#9a9ca1; padding:3px 8px; border-radius:6px; }
+    .track-stat-number{ font-size:34px; font-weight:700; color:#f5f5f5; }
+
+    .track-toggle{ display:flex; align-items:center; gap:8px; font-size:12px; color:#9a9ca1; }
+    .track-switch{ width:34px; height:18px; border-radius:20px; background:#2a2c31; position:relative; cursor:pointer; flex-shrink:0; }
+    .track-switch::after{ content:""; position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:50%; background:#fff; transition:left .15s ease; }
+    .track-switch.on{ background:#16a34a; }
+    .track-switch.on::after{ left:18px; }
+
+    .track-grid{ display:grid; grid-template-columns: 1.5fr 1fr; gap:16px; align-items:start; }
+
+    .track-map-card{
+      background:#17181c; border:1px solid #24262b; border-radius:14px; padding:14px;
+    }
+    .track-map-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .track-map-select{
+      background:#1f2125; border:1px solid #2a2c31; color:#e7e7e7; font-size:12px;
+      padding:6px 10px; border-radius:8px; cursor:pointer;
+    }
+    .track-map{
+      position:relative; height:420px; border-radius:10px; overflow:hidden;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(220,38,38,0.06), transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(220,38,38,0.05), transparent 40%),
+        repeating-linear-gradient(0deg, #1b1d21, #1b1d21 38px, #202226 39px),
+        repeating-linear-gradient(90deg, #1b1d21, #1b1d21 38px, #202226 39px);
+    }
+    .track-pin{
+      position:absolute; width:14px; height:14px; border-radius:50%;
+      transform:translate(-50%, -50%); cursor:pointer;
+      box-shadow:0 0 0 4px rgba(255,255,255,0.06);
+    }
+    .track-pin.online{ background:#22c55e; }
+    .track-pin.offline{ background:#6b7280; }
+    .track-pin::after{
+      content:""; position:absolute; inset:-8px; border-radius:50%;
+      border:1px solid rgba(255,255,255,0.12);
+    }
+    .track-pin.selected{ box-shadow:0 0 0 5px rgba(220,38,38,0.35); }
+
+    .track-tooltip{
+      position:absolute; transform:translate(-50%, -130%);
+      background:#0e0f11; border:1px solid #2a2c31; border-radius:10px;
+      padding:8px 12px; font-size:12px; color:#f2f2f2; white-space:nowrap;
+      box-shadow:0 8px 20px rgba(0,0,0,0.4); pointer-events:none;
+    }
+    .track-tooltip .tt-name{ font-weight:700; font-size:13px; }
+    .track-tooltip .tt-meta{ color:#9a9ca1; margin-top:2px; }
+
+    .track-map-controls{ position:absolute; bottom:14px; right:14px; display:flex; flex-direction:column; gap:6px; }
+    .track-map-controls span{
+      width:28px; height:28px; background:#1a1c20; border:1px solid #2a2c31; color:#e7e7e7;
+      border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px;
+    }
+
+    .track-list-card{
+      background:#17181c; border:1px solid #24262b; border-radius:14px; padding:14px;
+      max-height:480px; overflow-y:auto;
+    }
+    .track-list-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:0 4px; }
+    .track-list-head h2{ font-size:15px; color:#f5f5f5; margin:0; }
+    .track-add-btn{
+      width:26px; height:26px; border-radius:8px; background:#dc2626; color:#fff;
+      display:flex; align-items:center; justify-content:center; font-size:15px; cursor:pointer; border:none;
+    }
+
+    .track-item{
+      display:block; padding:12px; border-radius:10px; margin-bottom:8px;
+      border:1px solid transparent; cursor:pointer;
+    }
+    .track-item:hover{ background:#1c1e22; }
+    .track-item.selected{ background:#1c1e22; border-color:#dc2626; }
+    .track-item-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+    .track-item-who{ display:flex; gap:10px; align-items:center; }
+    .track-item-avatar{
+      width:36px; height:36px; border-radius:9px; background:#2a2c31; color:#f2f2f2;
+      display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;
+    }
+    .track-item-name{ font-size:13px; font-weight:700; color:#f5f5f5; }
+    .track-item-sub{ font-size:11.5px; color:#9a9ca1; margin-top:1px; }
+    .track-item-time{ font-size:11px; color:#7c7e84; white-space:nowrap; }
+
+    .track-item-stats{ display:flex; gap:18px; margin-top:10px; padding-left:46px; }
+    .track-item-stat-label{ font-size:10.5px; color:#7c7e84; text-transform:uppercase; letter-spacing:.03em; }
+    .track-item-stat-value{ font-size:12.5px; color:#e7e7e7; font-weight:600; margin-top:2px; }
+    .track-item-stat-value.offline{ color:#6b7280; }
+
+    .track-item-actions{ display:flex; gap:6px; margin-top:10px; padding-left:46px; }
+    .track-mini-btn{
+      font-size:11px; color:#9a9ca1; background:none; border:none; cursor:pointer; padding:2px 0;
+    }
+    .track-mini-btn:hover{ color:#f87171; }
+    .track-mini-dot{ color:#3a3c42; }
+
+    @media (max-width: 980px){
+      .track-grid{ grid-template-columns: 1fr; }
+      .track-stats{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="fynder logo.png" alt="NSCDC logo">
+      <div>
+        <b>NSCDC</b>
+        <small>FYNder Agent Platform</small>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a href="dashboard.html"><span class="nav-icon">⌂</span>Dashboard</a>
+      <a href="agents.html"><span class="nav-icon">♙</span>Add Agent</a>
+      <a href="alerts.html"><span class="nav-icon">⚠</span>Alert Log</a>
+      <a class="active" href="tracking.html"><span class="nav-icon">📡</span>Tracking Sessions</a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="admin">
+        <div class="avatar">NA</div>
+        <div>
+          <b>NSCDC Admin</b>
+          <small>Administrator</small>
+        </div>
+       
+      </div>
+      
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <header>
+      <div class="org">
+        <img class="org-logo" src="nscdc-logo.png" alt="NSCDC logo">
+        <div>
+          <b>Nigeria Security &amp; Civil Defence Corps</b>
+          <small>FYNder Agent Management</small>
+        </div>
+      </div>
+
+      <div class="search">⌕ &nbsp; Search anything...</div>
+
+      <div class="notif" id="notifBell">
+        <span class="notif-bell-icon">🔔</span><i class="badge" id="notifBadge">3</i>
+        <div class="notif-menu" id="notifMenu">
+          <div class="notif-menu-header">Recent reports</div>
+          <a class="notif-item" href="alerts.html#ALT-00124">
+            <span class="notif-icon">🏫</span>
+            <div>
+              <div class="notif-item-title">School Attack reported</div>
+              <div class="notif-item-sub">Umuahia North · Critical · 10:42 AM</div>
+            </div>
+          </a>
+          <a class="notif-item" href="alerts.html#ALT-00123">
+            <span class="notif-icon">🧒</span>
+            <div>
+              <div class="notif-item-title">Missing Child reported</div>
+              <div class="notif-item-sub">Aba South · High · 9:17 AM</div>
+            </div>
+          </a>
+          <a class="notif-view-all" href="alerts.html">View all alerts</a>
+        </div>
+      </div>
+
+      <div class="top-user" id="topUser">
+        <div class="avatar">NA</div>
+        <span>NSCDC Admin</span>
+        <span>⌄</span>
+        <div class="top-user-menu" id="topUserMenu">
+          <a href="dashboard.html">⏻ Log out</a>
+        </div>
+      </div>
+    </header>
+
+    <section class="content">
+
+      <div class="track-title-row">
+        <div>
+          <div class="eyebrow">LIVE OPERATIONS</div>
+          <h1>Tracking Sessions</h1>
+          <p class="subtitle" id="liveClock">Overview, loading time…</p>
+        </div>
+        <div class="track-actions">
+          <button class="track-action-btn" id="refreshBtn">🔄 Refresh all locations</button>
+          <button class="track-action-btn" id="alertAllBtn">⚠ Send alert to all agents</button>
+          <button class="track-action-btn primary" id="shareLinkBtn">🔗 Share location link</button>
+        </div>
+      </div>
+
+      <div class="track-stats">
+        <div class="track-stat-card">
+          <div class="track-stat-top">
+            <span class="track-stat-label">Devices tracking</span>
+            <span class="track-stat-updated" id="deviceUpdated">Updated just now</span>
+          </div>
+          <div class="track-stat-number">24</div>
+          <div class="track-stat-label" style="margin-top:4px;">Mobile phones · Android &amp; iOS</div>
+        </div>
+
+        <div class="track-stat-card">
+          <div class="track-stat-top">
+            <span class="track-stat-label">People being tracked</span>
+            <div class="track-toggle">
+              <span>Online only</span>
+              <div class="track-switch on" id="onlineOnlyToggle"></div>
+            </div>
+          </div>
+          <div class="track-stat-number" id="peopleTrackedNumber">18</div>
+          <div class="track-stat-label" style="margin-top:4px;"><span id="peopleTrackedSub">18 online · 6 offline</span></div>
+        </div>
+      </div>
+
+      <div class="track-grid">
+
+        <!-- Map -->
+        <div class="track-map-card">
+          <div class="track-map-head">
+            <select class="track-map-select">
+              <option>All agents</option>
+              <option>Online only</option>
+              <option>Offline only</option>
+            </select>
+            <span style="font-size:12px; color:#9a9ca1;">● Live</span>
+          </div>
+
+          <div class="track-map" id="trackMap">
+            <!-- pins injected by JS -->
+          </div>
+        </div>
+
+        <!-- Connected agents -->
+        <div class="track-list-card">
+          <div class="track-list-head">
+            <h2>Connected agents</h2>
+            <button class="track-add-btn" title="Add device">＋</button>
+          </div>
+          <div id="trackList"><!-- items injected by JS --></div>
+        </div>
+
+      </div>
+
+    </section>
+  </main>
+</div>
+
+<script>
+  var trackedAgents = [
+    {
+      id: "a1", name: "Nkem Johnson", rank: "Inspector · Operations", device: "Infinix Hot 40",
+      status: "online", location: "Umuahia North", lastUpdate: "2 min ago",
+      battery: "82%", signal: "Strong", x: 28, y: 32
+    },
+    {
+      id: "a2", name: "Bola Okafor", rank: "Officer · Security", device: "Tecno Spark 10",
+      status: "online", location: "Aba South", lastUpdate: "5 min ago",
+      battery: "64%", signal: "Strong", x: 62, y: 58
+    },
+    {
+      id: "a3", name: "David Okechukwu", rank: "Inspector · Field Ops", device: "Samsung A14",
+      status: "online", location: "Umuahia South", lastUpdate: "1 min ago",
+      battery: "45%", signal: "Moderate", x: 44, y: 48
+    },
+    {
+      id: "a4", name: "Ifeanyi Kalu", rank: "Inspector · Operations", device: "Infinix Note 30",
+      status: "online", location: "Umuahia North", lastUpdate: "8 min ago",
+      battery: "91%", signal: "Strong", x: 33, y: 22
+    },
+    {
+      id: "a5", name: "Sarah Lawson", rank: "Inspector · Security", device: "Itel P40",
+      status: "offline", location: "Umuahia", lastUpdate: "1 day ago",
+      battery: "—", signal: "No signal", x: 70, y: 26
+    }
+  ];
+
+  var selectedId = "a1";
+
+  function initials(name){
+    var parts = name.split(" ");
+    return (parts[0][0] + (parts[1] ? parts[1][0] : "")).toUpperCase();
+  }
+
+  function renderMap(){
+    var map = document.getElementById("trackMap");
+    var html = "";
+    trackedAgents.forEach(function(p){
+      var cls = "track-pin " + p.status + (p.id === selectedId ? " selected" : "");
+      html += '<div class="' + cls + '" style="left:' + p.x + '%; top:' + p.y + '%;" data-id="' + p.id + '"></div>';
+      if (p.id === selectedId) {
+        html += '<div class="track-tooltip" style="left:' + p.x + '%; top:' + p.y + '%;">' +
+                  '<div class="tt-name">' + p.name + '</div>' +
+                  '<div class="tt-meta">' + p.location + ' · ' + (p.status === "online" ? "Online" : "Offline") + ' · ' + p.lastUpdate + '</div>' +
+                '</div>';
+      }
+    });
+    html += '<div class="track-map-controls"><span>＋</span><span>−</span></div>';
+    map.innerHTML = html;
+
+    map.querySelectorAll(".track-pin").forEach(function(pin){
+      pin.addEventListener("click", function(){
+        selectedId = pin.getAttribute("data-id");
+        renderMap();
+        renderList();
+      });
+    });
+  }
+
+  function renderList(){
+    var list = document.getElementById("trackList");
+    var html = "";
+    trackedAgents.forEach(function(p){
+      var selectedCls = p.id === selectedId ? " selected" : "";
+      var dotColor = p.status === "online" ? "#22c55e" : "#6b7280";
+      html += '' +
+        '<div class="track-item' + selectedCls + '" data-id="' + p.id + '">' +
+          '<div class="track-item-top">' +
+            '<div class="track-item-who">' +
+              '<div class="track-item-avatar">' + initials(p.name) + '</div>' +
+              '<div>' +
+                '<div class="track-item-name">' + p.name + '</div>' +
+                '<div class="track-item-sub"><span style="color:' + dotColor + ';">●</span> ' + p.device + ' · ' + p.location + '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="track-item-time">' + p.lastUpdate + '</div>' +
+          '</div>' +
+          '<div class="track-item-stats">' +
+            '<div><div class="track-item-stat-label">Battery</div><div class="track-item-stat-value' + (p.status === "offline" ? " offline" : "") + '">' + p.battery + '</div></div>' +
+            '<div><div class="track-item-stat-label">Signal</div><div class="track-item-stat-value' + (p.status === "offline" ? " offline" : "") + '">' + p.signal + '</div></div>' +
+          '</div>' +
+          '<div class="track-item-actions">' +
+            '<button class="track-mini-btn" data-action="navigate">Navigate</button>' +
+            '<span class="track-mini-dot">·</span>' +
+            '<button class="track-mini-btn" data-action="message">Message</button>' +
+            '<span class="track-mini-dot">·</span>' +
+            '<button class="track-mini-btn" data-action="end">End session</button>' +
+          '</div>' +
+        '</div>';
+    });
+    list.innerHTML = html;
+
+    list.querySelectorAll(".track-item").forEach(function(item){
+      item.addEventListener("click", function(){
+        selectedId = item.getAttribute("data-id");
+        renderMap();
+        renderList();
+      });
+    });
+  }
+
+  function updatePeopleStat(){
+    var online = trackedAgents.filter(function(p){ return p.status === "online"; }).length;
+    var offline = trackedAgents.length - online;
+    var toggle = document.getElementById("onlineOnlyToggle");
+    var onlineOnly = toggle.classList.contains("on");
+    document.getElementById("peopleTrackedNumber").textContent = onlineOnly ? online : trackedAgents.length;
+    document.getElementById("peopleTrackedSub").textContent = online + " online · " + offline + " offline";
+  }
+
+  document.getElementById("onlineOnlyToggle").addEventListener("click", function(){
+    this.classList.toggle("on");
+    updatePeopleStat();
+  });
+
+  function updateClock(){
+    var now = new Date();
+    var h = now.getHours();
+    var m = now.getMinutes();
+    var ampm = h >= 12 ? "pm" : "am";
+    h = h % 12; if (h === 0) h = 12;
+    var mStr = (m < 10 ? "0" : "") + m;
+    document.getElementById("liveClock").textContent = "Overview, " + h + ":" + mStr + " " + ampm;
+  }
+
+  document.getElementById("refreshBtn").addEventListener("click", function(){
+    var btn = this;
+    btn.textContent = "🔄 Refreshing…";
+    document.getElementById("deviceUpdated").textContent = "Updated just now";
+    setTimeout(function(){ btn.textContent = "🔄 Refresh all locations"; }, 900);
+  });
+
+  document.getElementById("alertAllBtn").addEventListener("click", function(){
+    alert("Alert sent to all " + trackedAgents.length + " tracked agents.");
+  });
+
+  document.getElementById("shareLinkBtn").addEventListener("click", function(){
+    var btn = this;
+    var dummyLink = window.location.href.replace(/tracking\.html.*$/, "") + "tracking.html?share=demo123";
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(dummyLink).then(function(){
+        btn.textContent = "✓ Link copied";
+        setTimeout(function(){ btn.textContent = "🔗 Share location link"; }, 1500);
+      }).catch(function(){
+        btn.textContent = "🔗 Share location link";
+      });
+    }
+  });
+
+  renderMap();
+  renderList();
+  updatePeopleStat();
+  updateClock();
+  setInterval(updateClock, 30000);
+
+  // Header dropdowns (same behavior as other pages)
+  var topUser = document.getElementById("topUser");
+  if (topUser) {
+    topUser.addEventListener("click", function(e){
+      e.stopPropagation();
+      topUser.classList.toggle("open");
+    });
+    document.addEventListener("click", function(){ topUser.classList.remove("open"); });
+    var topUserMenu = document.getElementById("topUserMenu");
+    if (topUserMenu) topUserMenu.addEventListener("click", function(e){ e.stopPropagation(); });
+  }
+
+  var notifBell = document.getElementById("notifBell");
+  var notifMenu = document.getElementById("notifMenu");
+  if (notifBell) {
+    notifBell.addEventListener("click", function(e){
+      e.stopPropagation();
+      notifBell.classList.toggle("open");
+    });
+    document.addEventListener("click", function(){ notifBell.classList.remove("open"); });
+    if (notifMenu) notifMenu.addEventListener("click", function(e){ e.stopPropagation(); });
+  }
+
+  function shakeNotifBell(){
+    if (!notifBell) return;
+    notifBell.classList.add("shake");
+    setTimeout(function(){ notifBell.classList.remove("shake"); }, 650);
+  }
+  setTimeout(shakeNotifBell, 3000);
+  setInterval(shakeNotifBell, 20000);
+</script>
+
+</body>
+</html>
