@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NSCDC FYNder — Alert Log</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    /* ---------- shared dropdown (same as agents.html / dashboard.html) ---------- */
+    .top-user{ position: relative; cursor: pointer; user-select: none; }
+    .top-user-menu{
+      display: none; position: absolute; top: 100%; right: 0; margin-top: 10px;
+      min-width: 150px; background: #fff; border: 1px solid #eee; border-radius: 10px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.12); overflow: hidden; z-index: 60;
+    }
+    .top-user.open .top-user-menu{ display: block; }
+    .top-user-menu a{ display: block; padding: 10px 14px; font-size: 14px; color: #dc2626; text-decoration: none; }
+    .top-user-menu a:hover{ background: #fef2f2; }
+
+    /* --- Notification bell: vibrate + dropdown --- */
+    .notif{ position: relative; cursor: pointer; }
+    .notif-bell-icon{ display: inline-block; }
+    @keyframes bellShake{
+      0%,100%{ transform: rotate(0); }
+      10%,30%,50%,70%{ transform: rotate(-14deg); }
+      20%,40%,60%{ transform: rotate(14deg); }
+      80%{ transform: rotate(-7deg); }
+      90%{ transform: rotate(7deg); }
+    }
+    .notif.shake .notif-bell-icon{ animation: bellShake .6s ease-in-out; }
+    .notif-menu{
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 12px;
+      width: 270px;
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+      overflow: hidden;
+      z-index: 70;
+      cursor: default;
+    }
+    .notif.open .notif-menu{ display: block; }
+    .notif-menu-header{
+      padding: 10px 14px; font-size: 12px; font-weight: 700; letter-spacing: .03em;
+      text-transform: uppercase; color: #999; border-bottom: 1px solid #f2f2f2;
+    }
+    .notif-item{
+      display: flex; gap: 8px; align-items: flex-start; padding: 10px 14px;
+      text-decoration: none; color: #1a1a1a; border-bottom: 1px solid #f7f7f7;
+    }
+    .notif-item:hover{ background: #fef2f2; }
+    .notif-item .notif-icon{ font-size: 16px; margin-top: 1px; }
+    .notif-item-title{ font-size: 13px; font-weight: 600; }
+    .notif-item-sub{ font-size: 12px; color: #999; margin-top: 1px; }
+    .notif-view-all{
+      display: block; text-align: center; padding: 10px; font-size: 13px;
+      font-weight: 600; color: #dc2626; text-decoration: none;
+    }
+    .notif-view-all:hover{ background: #fef2f2; }
+
+    /* ---------- extra pill colors (red / blue / yellow) ---------- */
+    .pill.red{ background:#fef2f2; color:#b91c1c; }
+    .pill.red .dot{ background:#dc2626; }
+    .pill.blue{ background:#eff6ff; color:#1d4ed8; }
+    .pill.blue .dot{ background:#2563eb; }
+    .pill.yellow{ background:#fefce8; color:#a16207; }
+    .pill.yellow .dot{ background:#eab308; }
+
+    /* ---------- alert layout: list + detail panel ---------- */
+    .alert-layout{
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    .alert-layout.list-only .alert-detail{ display: none !important; }
+    .alert-layout.list-only{ grid-template-columns: 1fr !important; }
+
+    .case-cell{ display:flex; align-items:center; gap:8px; }
+    .case-cell .case-icon{ font-size:16px; }
+    .case-cell b{ cursor:pointer; }
+    .case-cell b:hover{ text-decoration:underline; color:#dc2626; }
+
+    /* ---------- detail panel ---------- */
+    .alert-detail{
+      background:#fff; border:1px solid #eee; border-radius:14px;
+      padding:20px; max-height: 88vh; overflow-y:auto;
+    }
+    .alert-detail-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:14px; }
+    .alert-detail-head h2{ margin:0 0 4px 0; font-size:19px; }
+    .alert-detail-sub{ font-size:13px; color:#888; }
+    .alert-badges{ display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+    .close-detail{
+      width:28px; height:28px; border-radius:50%; border:1px solid #e2e2e2; background:#fff;
+      color:#666; font-size:16px; line-height:1; cursor:pointer; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .close-detail:hover{ background:#fee2e2; color:#dc2626; border-color:#fca5a5; }
+
+    .detail-actions{ display:flex; gap:8px; align-items:flex-start; flex-shrink:0; }
+    .print-detail-btn{
+      display:flex; align-items:center; gap:6px; white-space:nowrap;
+      border:1px solid #e2e2e2; background:#fff; color:#444;
+      font-size:12px; font-weight:600; padding:0 12px; height:28px; border-radius:8px;
+      cursor:pointer;
+    }
+    .print-detail-btn:hover{ background:#fef2f2; color:#dc2626; border-color:#fca5a5; }
+
+    .child-focus{
+      display:flex; align-items:center; gap:14px;
+      background:#fef2f2; border-radius:12px; padding:14px; margin-bottom:18px;
+    }
+    .child-photo{
+      width:64px; height:64px; border-radius:12px; background:#dc2626; color:#fff;
+      display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px;
+      flex-shrink:0; overflow:hidden;
+    }
+    .child-photo img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .child-focus-name{ font-size:18px; font-weight:700; margin:0 0 2px 0; }
+    .child-focus-meta{ font-size:13px; color:#666; }
+
+    .detail-section{ margin-bottom:20px; }
+    .detail-section-title{
+      font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+      color:#b91c1c; margin-bottom:10px; display:flex; align-items:center; gap:6px;
+    }
+    .field-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px 16px; }
+    .field-grid .full{ grid-column: 1 / -1; }
+    .field{ display:flex; flex-direction:column; gap:2px; }
+    .field label{ font-size:11px; color:#999; text-transform:uppercase; letter-spacing:.03em; }
+    .field span{ font-size:14px; color:#1a1a1a; font-weight:500; }
+
+    .detail-map{
+      margin-top:10px; height:110px; border-radius:10px; background:#f3f4f0;
+      border:1px solid #eee; display:flex; align-items:center; justify-content:center;
+      font-size:12px; color:#999; gap:6px;
+    }
+
+    .timeline-item{ display:flex; gap:10px; padding:6px 0; }
+    .timeline-dot{
+      width:9px; height:9px; border-radius:50%; margin-top:5px; flex-shrink:0; background:#d1d5db;
+    }
+    .timeline-item.done .timeline-dot{ background:#16a34a; }
+    .timeline-item.latest .timeline-dot{ background:#dc2626; }
+    .timeline-text{ font-size:13px; color:#1a1a1a; }
+    .timeline-time{ font-size:12px; color:#999; margin-top:1px; }
+
+    /* ---------- Print / Save as PDF: show only the open alert detail ---------- */
+    @media print {
+      body *{ visibility:hidden; }
+      .alert-detail, .alert-detail *{ visibility:visible; }
+      .alert-detail{
+        position:absolute; top:0; left:0; width:100%;
+        max-height:none; overflow:visible; border:none; box-shadow:none; padding:0;
+      }
+      .close-detail, .print-detail-btn{ display:none !important; }
+      .detail-map{ border:1px solid #ddd; }
+      .field span{ color:#000; }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="fynder logo.png" alt="NSCDC logo">
+      <div>
+        <b>NSCDC</b>
+        <small>FYNder Agent Platform</small>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a href="dashboard.html"><span class="nav-icon">⌂</span>Dashboard</a>
+      <a href="agents.html"><span class="nav-icon">♙</span>Add Agent</a>
+      <a class="active" href="alerts.html"><span class="nav-icon">⚠</span>Alert Log</a>
+      <a href="tracking.html"><span class="nav-icon">📡</span>Tracking Sessions</a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="admin">
+        <div class="avatar">NA</div>
+        <div>
+          <b>NSCDC Admin</b>
+          <small>Administrator</small>
+        </div>
+       
+      </div>
+      
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <header>
+      <div class="org">
+        <img class="org-logo" src="nscdc-logo.png" alt="NSCDC logo">
+        <div>
+          <b>Nigeria Security &amp; Civil Defence Corps</b>
+          <small>FYNder Agent Management</small>
+        </div>
+      </div>
+
+      <div class="search">⌕ &nbsp; Search anything...</div>
+
+      <div class="notif" id="notifBell">
+        <span class="notif-bell-icon">🔔</span><i class="badge" id="notifBadge">3</i>
+        <div class="notif-menu" id="notifMenu">
+          <div class="notif-menu-header">Recent reports</div>
+          <a class="notif-item" href="#ALT-00124">
+            <span class="notif-icon">🏫</span>
+            <div>
+              <div class="notif-item-title">School Attack reported</div>
+              <div class="notif-item-sub">Umuahia North · Critical · 10:42 AM</div>
+            </div>
+          </a>
+          <a class="notif-item" href="#ALT-00123">
+            <span class="notif-icon">🧒</span>
+            <div>
+              <div class="notif-item-title">Missing Child reported</div>
+              <div class="notif-item-sub">Aba South · High · 9:17 AM</div>
+            </div>
+          </a>
+          <a class="notif-item" href="#ALT-00121">
+            <span class="notif-icon">🏫</span>
+            <div>
+              <div class="notif-item-title">School Attack reported</div>
+              <div class="notif-item-sub">Ohafia · High · 8:30 AM</div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <div class="top-user" id="topUser">
+        <div class="avatar">NA</div>
+        <span>NSCDC Admin</span>
+        <span>⌄</span>
+        <div class="top-user-menu" id="topUserMenu">
+          <a href="dashboard.html">⏻ Log out</a>
+        </div>
+      </div>
+    </header>
+
+    <section class="content">
+      <div class="title-row">
+        <div>
+          <div class="eyebrow">OPERATIONAL ALERTS</div>
+          <h1>Alert Log</h1>
+          <p class="subtitle">Track active incidents and case details across school attacks and missing persons.</p>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card stat-red-one">
+          <div class="stat-content">
+            <span class="stat-label">Active Alerts</span>
+            <strong class="stat-number">24</strong>
+            <span class="stat-description">Open cases</span>
+          </div>
+          <div class="stat-icon">⚠</div>
+        </div>
+
+        <div class="stat-card stat-red-two">
+          <div class="stat-content">
+            <span class="stat-label">Critical</span>
+            <strong class="stat-number">6</strong>
+            <span class="stat-description">Needs immediate response</span>
+          </div>
+          <div class="stat-icon">●</div>
+        </div>
+
+        <div class="stat-card stat-red-three">
+          <div class="stat-content">
+            <span class="stat-label">In Progress</span>
+            <strong class="stat-number">11</strong>
+            <span class="stat-description">Responding / searching</span>
+          </div>
+          <div class="stat-icon">⟳</div>
+        </div>
+
+        <div class="stat-card stat-red-four">
+          <div class="stat-content">
+            <span class="stat-label">Resolved Today</span>
+            <strong class="stat-number">7</strong>
+            <span class="stat-description">Closed or reunited</span>
+          </div>
+          <div class="stat-icon">✓</div>
+        </div>
+      </div>
+
+      <div class="alert-layout list-only" id="alertLayout">
+
+        <!-- Alert list -->
+        <div class="card agent-card">
+          <div class="toolbar">
+            <div class="input-wrap">
+              <span>⌕</span>
+              <input class="input" id="alertSearchInput" placeholder="Search by alert ID, location or agent...">
+            </div>
+            <select class="select" id="caseTypeFilter">
+              <option value="all">All case types</option>
+              <option value="school">School Attack</option>
+              <option value="missing_child">Missing Child</option>
+            </select>
+            <select class="select" id="severityFilter">
+              <option value="all">All severities</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+
+          <div class="list-summary">
+            <span><strong>24</strong> active alerts</span>
+            <span><span class="tiny-green"></span> 11 in progress</span>
+            <span><span class="tiny-gray"></span> 13 resolved</span>
+          </div>
+
+          <div class="mobile-scroll">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ALERT ID</th>
+                  <th>CASE TYPE</th>
+                  <th>LOCATION</th>
+                  <th>DATE / TIME</th>
+                  <th>SEVERITY</th>
+                  <th>STATUS</th>
+                  <th>AGENT</th>
+                  <th>ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody id="alertTableBody">
+                <!-- rows injected by JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination">
+            <span>Showing 1–6 of 24 alerts</span>
+            <div><button>‹</button><button class="current">1</button><button>2</button><button>3</button><button>…</button><button>4</button><button>›</button></div>
+          </div>
+        </div>
+
+        <!-- Detail panel -->
+        <div class="alert-detail" id="alertDetail">
+          <div id="alertDetailBody"></div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  var alertsData = {
+    "ALT-00124": {
+      type: "school",
+      caseTypeLabel: "School Attack", caseTypeIcon: "🏫",
+      location: "Umuahia North", dateTime: "15 Aug, 10:42 AM",
+      severity: "critical", severityLabel: "Critical",
+      status: "active", statusLabel: "Active",
+      agent: "Agent 04",
+      school: {
+        schoolName: "Umuahia North Community Secondary School",
+        schoolAddress: "School Road, Umuahia North",
+        lga: "Umuahia North",
+        mapLabel: "Umuahia North Community Secondary School"
+      },
+      people: { students: "~340 on site", staff: "28 on site", injured: "2 reported", missing: "0", casualties: "0 confirmed" },
+      attack: {
+        description: "Armed individuals attempted to breach the school perimeter during morning assembly. Security post raised the alarm and students were moved indoors.",
+        threatType: "Armed intruder",
+        suspectInfo: "Two male suspects, armed, fled toward Ntigha Road",
+        weapons: "Firearms reported",
+        hostage: "No hostage situation reported",
+        evacuation: "Partial evacuation in progress"
+      },
+      response: {
+        assignedAgent: "Agent 04 — Inspector N. Johnson",
+        agencies: "Nigeria Police, NSCDC, Ambulance",
+        responders: "3 units dispatched",
+        currentAction: "Perimeter secured, students moved to safe zone"
+      },
+      timeline: [
+        { time: "10:42 AM", text: "Alert received from school security post", state: "done" },
+        { time: "10:45 AM", text: "Location verified by dispatch", state: "done" },
+        { time: "10:47 AM", text: "Agent 04 assigned to case", state: "done" },
+        { time: "10:50 AM", text: "Nigeria Police and Ambulance notified", state: "done" },
+        { time: "11:05 AM", text: "Perimeter secured, evacuation underway", state: "latest" }
+      ]
+    },
+
+    "ALT-00123": {
+      type: "missing_child",
+      caseTypeLabel: "Missing Child", caseTypeIcon: "🧒",
+      location: "Aba South", dateTime: "15 Aug, 09:17 AM",
+      severity: "high", severityLabel: "High",
+      status: "searching", statusLabel: "Searching",
+      agent: "Agent 08",
+      child: { photoUrl: "photos/chidinma-nwosu.webp", photoInitials: "CN", fullName: "Chidinma Nwosu", age: "7 years", gender: "Female", dateReported: "15 Aug, 09:17 AM", caseStatus: "Searching" },
+      physical: { height: "~120 cm", build: "Slim", hair: "Black, plaited", clothing: "Blue school uniform, white socks", footwear: "Black sandals", marks: "Small scar above left eyebrow" },
+      lastKnown: { location: "Ogbor Hill Market, Aba South", dateTime: "15 Aug, 08:50 AM", circumstances: "Last seen walking with her mother near the market entrance before the two became separated in the crowd.", mapLabel: "Ogbor Hill Market" },
+      guardian: { name: "Ijeoma Nwosu", relationship: "Mother", contact: "0806 234 5678", reportedTo: "Duty Officer, Aba South Command" },
+      search: { assignedAgent: "Agent 08 — Officer B. Okafor", searchStatus: "Active search in progress", areas: "Ogbor Hill Market, surrounding streets, bus park", agencies: "Nigeria Police, Civil Defence volunteers", latestAction: "Search teams canvassing market stalls and transport hubs" },
+      timeline: [
+        { time: "09:17 AM", text: "Report received from guardian", state: "done" },
+        { time: "09:20 AM", text: "Child information verified", state: "done" },
+        { time: "09:25 AM", text: "Search initiated", state: "done" },
+        { time: "09:30 AM", text: "Police and volunteer teams notified", state: "done" },
+        { time: "10:15 AM", text: "Search teams canvassing bus park area", state: "latest" }
+      ]
+    },
+
+    "ALT-00122": {
+      type: "missing_child",
+      caseTypeLabel: "Missing Child", caseTypeIcon: "🧒",
+      location: "Umuahia South", dateTime: "14 Aug, 06:05 PM",
+      severity: "medium", severityLabel: "Medium",
+      status: "located", statusLabel: "Located",
+      agent: "Agent 12",
+      child: { photoInitials: "ET", fullName: "Emeka Ude", age: "10 years", gender: "Male", dateReported: "14 Aug, 06:05 PM", caseStatus: "Located" },
+      physical: { height: "~135 cm", build: "Average", hair: "Short, black", clothing: "Red T-shirt, denim shorts", footwear: "White sneakers", marks: "None reported" },
+      lastKnown: { location: "Umuahia South Motor Park", dateTime: "14 Aug, 05:30 PM", circumstances: "Wandered off from a family stall while parents were loading a vehicle.", mapLabel: "Umuahia South Motor Park" },
+      guardian: { name: "Chuka Ude", relationship: "Father", contact: "0813 456 7890", reportedTo: "Duty Officer, Umuahia South Command" },
+      search: { assignedAgent: "Agent 12 — Officer A. Kalu", searchStatus: "Located, reunification in progress", areas: "Motor park, nearby shops", agencies: "Nigeria Police", latestAction: "Child found with a shop owner near the park, awaiting parent verification" },
+      timeline: [
+        { time: "06:05 PM", text: "Report received from father", state: "done" },
+        { time: "06:10 PM", text: "Child information verified", state: "done" },
+        { time: "06:15 PM", text: "Search initiated", state: "done" },
+        { time: "06:20 PM", text: "Nigeria Police notified", state: "done" },
+        { time: "07:02 PM", text: "Child located near motor park, reunification in progress", state: "latest" }
+      ]
+    },
+
+    "ALT-00121": {
+      type: "school",
+      caseTypeLabel: "School Attack", caseTypeIcon: "🏫",
+      location: "Ohafia", dateTime: "14 Aug, 08:30 AM",
+      severity: "high", severityLabel: "High",
+      status: "responding", statusLabel: "Responding",
+      agent: "Agent 02",
+      school: { schoolName: "Ohafia Girls Secondary School", schoolAddress: "Amaekpu Road, Ohafia", lga: "Ohafia", mapLabel: "Ohafia Girls Secondary School" },
+      people: { students: "~210 on site", staff: "19 on site", injured: "0 reported", missing: "0", casualties: "0 confirmed" },
+      attack: {
+        description: "A bomb threat was called in to the school administration office, prompting immediate evacuation.",
+        threatType: "Bomb threat",
+        suspectInfo: "Anonymous caller, unidentified",
+        weapons: "Unconfirmed",
+        hostage: "No hostage situation reported",
+        evacuation: "Full evacuation completed"
+      },
+      response: { assignedAgent: "Agent 02 — Superintendent E. Obi", agencies: "NSCDC, Bomb Disposal Unit", responders: "2 units dispatched", currentAction: "Bomb disposal unit sweeping premises" },
+      timeline: [
+        { time: "08:30 AM", text: "Threat call received by school admin", state: "done" },
+        { time: "08:33 AM", text: "Location verified by dispatch", state: "done" },
+        { time: "08:35 AM", text: "Agent 02 assigned to case", state: "done" },
+        { time: "08:40 AM", text: "Bomb disposal unit notified", state: "done" },
+        { time: "09:10 AM", text: "Sweep of premises underway", state: "latest" }
+      ]
+    },
+
+    "ALT-00120": {
+      type: "missing_child",
+      caseTypeLabel: "Missing Child", caseTypeIcon: "🧒",
+      location: "Aba North", dateTime: "13 Aug, 03:12 PM",
+      severity: "low", severityLabel: "Low",
+      status: "reunited", statusLabel: "Reunited",
+      agent: "Agent 08",
+      child: { photoInitials: "FA", fullName: "Faith Adiele", age: "5 years", gender: "Female", dateReported: "13 Aug, 03:12 PM", caseStatus: "Reunited" },
+      physical: { height: "~105 cm", build: "Small", hair: "Black, in braids", clothing: "Pink dress", footwear: "Pink sandals", marks: "None reported" },
+      lastKnown: { location: "Ariaria Market, Aba North", dateTime: "13 Aug, 02:50 PM", circumstances: "Separated from grandmother while browsing market stalls.", mapLabel: "Ariaria Market" },
+      guardian: { name: "Grace Adiele", relationship: "Grandmother", contact: "0802 345 6789", reportedTo: "Duty Officer, Aba North Command" },
+      search: { assignedAgent: "Agent 08 — Officer B. Okafor", searchStatus: "Closed — reunited with family", areas: "Ariaria Market and surrounding stalls", agencies: "Nigeria Police", latestAction: "Child safely reunited with grandmother at market security post" },
+      timeline: [
+        { time: "03:12 PM", text: "Report received from grandmother", state: "done" },
+        { time: "03:15 PM", text: "Child information verified", state: "done" },
+        { time: "03:20 PM", text: "Search initiated", state: "done" },
+        { time: "03:25 PM", text: "Market security notified", state: "done" },
+        { time: "03:55 PM", text: "Child found and reunited with grandmother", state: "latest" }
+      ]
+    },
+
+    "ALT-00119": {
+      type: "school",
+      caseTypeLabel: "School Attack", caseTypeIcon: "🏫",
+      location: "Isiala Ngwa", dateTime: "12 Aug, 11:00 AM",
+      severity: "medium", severityLabel: "Medium",
+      status: "contained", statusLabel: "Contained",
+      agent: "Agent 06",
+      school: { schoolName: "Isiala Ngwa Model School", schoolAddress: "Ngwa Road, Isiala Ngwa", lga: "Isiala Ngwa South", mapLabel: "Isiala Ngwa Model School" },
+      people: { students: "~150 on site", staff: "14 on site", injured: "1 reported", missing: "0", casualties: "0 confirmed" },
+      attack: {
+        description: "A physical altercation involving outside youths escalated near the school gate, prompting a lockdown.",
+        threatType: "Armed intruder",
+        suspectInfo: "3 individuals, believed to be non-students",
+        weapons: "Machetes reported",
+        hostage: "No hostage situation reported",
+        evacuation: "Lockdown lifted, no evacuation required"
+      },
+      response: { assignedAgent: "Agent 06 — Officer T. Nwachukwu", agencies: "Nigeria Police", responders: "1 unit dispatched", currentAction: "Gate secured, suspects dispersed and being tracked" },
+      timeline: [
+        { time: "11:00 AM", text: "Alert received from school gatekeeper", state: "done" },
+        { time: "11:03 AM", text: "Location verified by dispatch", state: "done" },
+        { time: "11:06 AM", text: "Agent 06 assigned to case", state: "done" },
+        { time: "11:10 AM", text: "Nigeria Police notified", state: "done" },
+        { time: "11:45 AM", text: "Situation contained, lockdown lifted", state: "latest" }
+      ]
+    }
+  };
+
+  var severityPill = { critical: "red", high: "amber", medium: "yellow", low: "green" };
+  var statusPill = {
+    active: "red", responding: "amber", contained: "blue", resolved: "gray",
+    reported: "gray", searching: "amber", located: "blue", reunited: "green", closed: "gray"
+  };
+
+  function pillHtml(kind, label){
+    return '<span class="pill ' + kind + '"><span class="dot ' + kind + '-dot"></span>' + label + '</span>';
+  }
+
+  function buildRow(id, a){
+    return '' +
+      '<tr data-alert="' + id + '" data-type="' + a.type + '" data-severity="' + a.severity + '">' +
+        '<td><b>' + id + '</b></td>' +
+        '<td><div class="case-cell"><span class="case-icon">' + a.caseTypeIcon + '</span><b>' + a.caseTypeLabel + '</b></div></td>' +
+        '<td>' + a.location + '</td>' +
+        '<td>' + a.dateTime + '</td>' +
+        '<td>' + pillHtml(severityPill[a.severity], a.severityLabel) + '</td>' +
+        '<td>' + pillHtml(statusPill[a.status], a.statusLabel) + '</td>' +
+        '<td>' + a.agent + '</td>' +
+        '<td class="actions"><a class="action-btn view-alert-btn" href="#" data-alert="' + id + '">⌖ View</a></td>' +
+      '</tr>';
+  }
+
+  function field(label, value){
+    return '<div class="field"><label>' + label + '</label><span>' + value + '</span></div>';
+  }
+
+  function fieldFull(label, value){
+    return '<div class="field full"><label>' + label + '</label><span>' + value + '</span></div>';
+  }
+
+  function sectionTitle(icon, text){
+    return '<div class="detail-section-title">' + icon + ' ' + text + '</div>';
+  }
+
+  function buildTimeline(items){
+    var html = '';
+    items.forEach(function(t){
+      html += '<div class="timeline-item ' + t.state + '">' +
+                '<div class="timeline-dot"></div>' +
+                '<div><div class="timeline-text">' + t.text + '</div><div class="timeline-time">' + t.time + '</div></div>' +
+              '</div>';
+    });
+    return html;
+  }
+
+  function renderSchoolDetail(id, a){
+    var s = a.school, p = a.people, atk = a.attack, r = a.response;
+    var html = '';
+
+    html += '<div class="alert-detail-head">' +
+              '<div>' +
+                '<h2>' + a.caseTypeIcon + ' ' + a.caseTypeLabel + ' — ' + id + '</h2>' +
+                '<div class="alert-detail-sub">' + s.schoolName + ' · Reported ' + a.dateTime + '</div>' +
+                '<div class="alert-badges">' + pillHtml(severityPill[a.severity], a.severityLabel) + pillHtml(statusPill[a.status], a.statusLabel) + '</div>' +
+              '</div>' +
+              '<div class="detail-actions">' +
+                '<button type="button" class="print-detail-btn" id="printDetailBtn" title="Print / Save as PDF">🖨 Print</button>' +
+                '<button type="button" class="close-detail" id="closeDetailBtn" title="Close">×</button>' +
+              '</div>' +
+            '</div>';
+
+    html += '<div class="detail-section">' + sectionTitle('📋', 'Incident information') +
+              '<div class="field-grid">' +
+                field('Alert ID', id) +
+                field('Date &amp; time reported', a.dateTime) +
+                field('School name', s.schoolName) +
+                field('School address', s.schoolAddress) +
+                field('LGA', s.lga) +
+                field('Severity', a.severityLabel) +
+              '</div>' +
+              '<div class="detail-map">📍 ' + s.mapLabel + '</div>' +
+            '</div>';
+
+    html += '<div class="detail-section">' + sectionTitle('🧑‍🤝‍🧑', 'People affected') +
+              '<div class="field-grid">' +
+                field('Students affected', p.students) +
+                field('Staff affected', p.staff) +
+                field('Injured', p.injured) +
+                field('Missing', p.missing) +
+                fieldFull('Confirmed casualties', p.casualties) +
+              '</div>' +
+            '</div>';
+
+    html += '<div class="detail-section">' + sectionTitle('🚨', 'Attack information') +
+              '<div class="field-grid">' +
+                fieldFull('Description of incident', atk.description) +
+                field('Threat type', atk.threatType) +
+                field('Weapons reported', atk.weapons) +
+                fieldFull('Suspect information', atk.suspectInfo) +
+                field('Hostage situation', atk.hostage) +
+                field('Evacuation status', atk.evacuation) +
+              '</div>' +
+            '</div>';
+
+    html += '<div class="detail-section">' + sectionTitle('🛡', 'Response') +
+              '<div class="field-grid">' +
+                field('Assigned agent', r.assignedAgent) +
+                field('Responders dispatched', r.responders) +
+                fieldFull('Agencies notified', r.agencies) +
+                fieldFull('Current response action', r.currentAction) +
+              '</div>' +
+            '</div>';
+
+    html += '<div class="detail-section">' + sectionTitle('🕘', 'Timeline') + buildTimeline(a.timeline) + '</div>';
+
+    return html;
+  }
+
+  function renderMissingChildDetail(id, a){
+    var c = a.child, phy = a.physical, lk = a.lastKnown, g = a.guardian, sr = a.search;
+    var html = '';
+
+    html += '<div class="alert-detail-head">' +
+              '<div>' +
+                '<h2>' + a.caseTypeIcon + ' ' + a.caseTypeLabel + ' — ' + id + '</h2>' +
+                '<div class="alert-detail-sub">' + a.location + ' · Reported ' + a.dateTime + '</div>' +
+                '<div class="alert-badges">' + pillHtml(severityPill[a.severity], a.severityLabel) + pillHtml(statusPill[a.status], a.statusLabel) + '</div>' +
+              '</div>' +
+              '<div class="detail-actions">' +
+                '<button type="button" class="print-detail-btn" id="printDetailBtn" title="Print / Save as PDF">🖨 Print</button>' +
+                '<button type="button" class="close-detail" id="closeDetailBtn" title="Close">×</button>' +
+              '</div>' +
+            '</div>';
+
+    var photoInner = c.photoUrl ? '<img src="' + c.photoUrl + '" alt="Photo of ' + c.fullName + '">' : c.photoInitials;
+
+    html += '<div class="child-focus">' +
+              '<div class="child-photo">' + photoInner + '</div>' +
+              '<div>' +
+                '<p class="child-focus-name">' + c.fullName + '</p>' +
+                '<div class="child-focus-meta">' + c.age + ' · ' + c.gender + ' · Reported ' + c.dateReported + '</div>' +
+              '</div>' +
+            '</div>';
+
+    html += '<div class="detail-section">' + sectionTitle('🧒', 'Child information') +
+              '<div class="field-grid">' +
+                field('Full name', c.fullName) +
+                field('Age', c.age) +
+                field('Gender', c.gender) +
+                field('Date reported missing', c.dateReported) +
+                fieldFull('Case status', c.caseStatus) +
+              '</div>' +
+            '</div>';
+
+    html += '<div class="detail-section">' + sectionTitle('📝', 'Physical description') +
+              '<div class="field-grid">' +
+                field('Height', phy.height) +
+                field('Build', phy.build) +
+                field('Hair', phy.hair) +
+                field('Clothing', phy.clothing) +
+                field('Footwear', phy.footwear) +
+                fieldFull('Identifying marks / features', phy.marks) +
+              '</div>' +
+            '</div>';
+
+    html += '<div class="detail-section">' + sectionTitle('📍', 'Last known information') +
+              '<div class="field-grid">' +
+                field('Last seen location', lk.location) +
+                field('Last seen date / time', lk.dateTime) +
+                fieldFull('Circumstances', lk.circumstances) +
+              '</div>' +
+              '<div class="detail-map">📍 ' + lk.mapLabel + '</div>' +
+            '</div>';
+
+    html += '<div class="detail-section">' + sectionTitle('👪', 'Guardian / reporter') +
+              '<div class="field-grid">' +
+                field('Reporter name', g.name) +
+                field('Relationship to child', g.relationship) +
+                field('Contact information', g.contact) +
+                field('Report received by', g.reportedTo) +
+              '</div>' +
+            '</div>';
+
+    html += '<div class="detail-section">' + sectionTitle('🔎', 'Search &amp; response') +
+              '<div class="field-grid">' +
+                field('Assigned agent', sr.assignedAgent) +
+                field('Search status', sr.searchStatus) +
+                fieldFull('Areas being searched', sr.areas) +
+                fieldFull('Agencies notified', sr.agencies) +
+                fieldFull('Latest action', sr.latestAction) +
+              '</div>' +
+            '</div>';
+
+    html += '<div class="detail-section">' + sectionTitle('🕘', 'Timeline') + buildTimeline(a.timeline) + '</div>';
+
+    return html;
+  }
+
+  function renderAlertDetail(id){
+    var a = alertsData[id];
+    if (!a) return;
+
+    var body = document.getElementById("alertDetailBody");
+
+    body.innerHTML = a.type === "school" ? renderSchoolDetail(id, a) : renderMissingChildDetail(id, a);
+
+    document.getElementById("closeDetailBtn").addEventListener("click", function(){
+      document.getElementById("alertLayout").classList.add("list-only");
+      document.querySelectorAll(".table tbody tr").forEach(function(tr){ tr.classList.remove("selected-row"); });
+    });
+
+    document.getElementById("printDetailBtn").addEventListener("click", function(){
+      window.print();
+    });
+
+    document.querySelectorAll(".table tbody tr").forEach(function(tr){ tr.classList.remove("selected-row"); });
+    var row = document.querySelector('tr[data-alert="' + id + '"]');
+    if (row) row.classList.add("selected-row");
+
+    document.getElementById("alertLayout").classList.remove("list-only");
+  }
+
+  function buildTable(){
+    var tbody = document.getElementById("alertTableBody");
+    var order = ["ALT-00124", "ALT-00123", "ALT-00122", "ALT-00121", "ALT-00120", "ALT-00119"];
+    var html = "";
+    order.forEach(function(id){ html += buildRow(id, alertsData[id]); });
+    tbody.innerHTML = html;
+
+    document.querySelectorAll(".case-cell b").forEach(function(el){
+      var id = el.closest("tr").getAttribute("data-alert");
+      el.addEventListener("click", function(){ renderAlertDetail(id); });
+    });
+
+    document.querySelectorAll(".view-alert-btn").forEach(function(btn){
+      btn.addEventListener("click", function(e){
+        e.preventDefault();
+        renderAlertDetail(btn.getAttribute("data-alert"));
+      });
+    });
+
+    document.querySelectorAll(".table tbody tr td:first-child b").forEach(function(el){
+      var id = el.closest("tr").getAttribute("data-alert");
+      el.style.cursor = "pointer";
+      el.addEventListener("click", function(){ renderAlertDetail(id); });
+    });
+  }
+
+  buildTable();
+
+  // Live search + category filters for the alert table
+  function applyAlertFilters(){
+    var search = (document.getElementById("alertSearchInput").value || "").trim().toLowerCase();
+    var typeVal = document.getElementById("caseTypeFilter").value;
+    var severityVal = document.getElementById("severityFilter").value;
+    var rows = document.querySelectorAll("#alertTableBody tr[data-alert]");
+    var visibleCount = 0;
+
+    rows.forEach(function(tr){
+      var matchesSearch = !search || tr.textContent.toLowerCase().indexOf(search) !== -1;
+      var matchesType = typeVal === "all" || tr.getAttribute("data-type") === typeVal;
+      var matchesSeverity = severityVal === "all" || tr.getAttribute("data-severity") === severityVal;
+      var show = matchesSearch && matchesType && matchesSeverity;
+      tr.style.display = show ? "" : "none";
+      if (show) visibleCount++;
+    });
+
+    var noResultsRow = document.getElementById("noAlertResultsRow");
+    if (visibleCount === 0) {
+      if (!noResultsRow) {
+        noResultsRow = document.createElement("tr");
+        noResultsRow.id = "noAlertResultsRow";
+        noResultsRow.innerHTML = '<td colspan="8" style="text-align:center; color:#999; padding:24px;">No alerts match your search or filters.</td>';
+        document.getElementById("alertTableBody").appendChild(noResultsRow);
+      }
+    } else if (noResultsRow) {
+      noResultsRow.remove();
+    }
+  }
+
+  document.getElementById("alertSearchInput").addEventListener("input", applyAlertFilters);
+  document.getElementById("caseTypeFilter").addEventListener("change", applyAlertFilters);
+  document.getElementById("severityFilter").addEventListener("change", applyAlertFilters);
+
+
+  // Deep-link support: #ALT-00124 opens that alert's detail directly
+  // (used by the notification dropdown and can be shared/bookmarked)
+  function openAlertFromHash(){
+    var id = location.hash.replace("#", "");
+    if (id && alertsData[id]) {
+      renderAlertDetail(id);
+      document.getElementById("alertDetail").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+  window.addEventListener("hashchange", openAlertFromHash);
+  openAlertFromHash();
+
+  var topUser = document.getElementById("topUser");
+  if (topUser) {
+    topUser.addEventListener("click", function(e){
+      e.stopPropagation();
+      topUser.classList.toggle("open");
+    });
+    document.addEventListener("click", function(){ topUser.classList.remove("open"); });
+    var topUserMenu = document.getElementById("topUserMenu");
+    if (topUserMenu) topUserMenu.addEventListener("click", function(e){ e.stopPropagation(); });
+  }
+
+  // Notification bell: dropdown + vibrate on new report
+  var notifBell = document.getElementById("notifBell");
+  var notifMenu = document.getElementById("notifMenu");
+  if (notifBell) {
+    notifBell.addEventListener("click", function(e){
+      e.stopPropagation();
+      notifBell.classList.toggle("open");
+    });
+    document.addEventListener("click", function(){ notifBell.classList.remove("open"); });
+    if (notifMenu) notifMenu.addEventListener("click", function(e){ e.stopPropagation(); });
+  }
+
+  function shakeNotifBell(){
+    if (!notifBell) return;
+    notifBell.classList.add("shake");
+    setTimeout(function(){ notifBell.classList.remove("shake"); }, 650);
+  }
+
+  // Simulates a new report coming in. Replace with a real trigger
+  // (e.g. a websocket "new_alert" event) when this connects to a backend.
+  setTimeout(shakeNotifBell, 3000);
+  setInterval(shakeNotifBell, 20000);
+</script>
+
+</body>
+</html>

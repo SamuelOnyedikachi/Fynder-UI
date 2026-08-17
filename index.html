@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>NSCDC FYNder — Dashboard</title>
+
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    /* --- Admin dropdown (header, top-right) — same pattern as agents.html --- */
+    .top-user{ position: relative; cursor: pointer; user-select: none; }
+    .top-user-menu{
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 10px;
+      min-width: 150px;
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+      overflow: hidden;
+      z-index: 60;
+    }
+    .top-user.open .top-user-menu{ display: block; }
+    .top-user-menu a{
+      display: block;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: #dc2626;
+      text-decoration: none;
+    }
+    .top-user-menu a:hover{ background: #fef2f2; }
+
+    /* --- Notification bell: vibrate + dropdown --- */
+    .notification{ position: relative; cursor: pointer; }
+    .notif-bell-icon{ display: inline-block; }
+    @keyframes bellShake{
+      0%,100%{ transform: rotate(0); }
+      10%,30%,50%,70%{ transform: rotate(-14deg); }
+      20%,40%,60%{ transform: rotate(14deg); }
+      80%{ transform: rotate(-7deg); }
+      90%{ transform: rotate(7deg); }
+    }
+    .notification.shake .notif-bell-icon{ animation: bellShake .6s ease-in-out; }
+    .notif-menu{
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 12px;
+      width: 270px;
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+      overflow: hidden;
+      z-index: 70;
+      cursor: default;
+    }
+    .notification.open .notif-menu{ display: block; }
+    .notif-menu-header{
+      padding: 10px 14px; font-size: 12px; font-weight: 700; letter-spacing: .03em;
+      text-transform: uppercase; color: #999; border-bottom: 1px solid #f2f2f2;
+    }
+    .notif-item{
+      display: flex; gap: 8px; align-items: flex-start; padding: 10px 14px;
+      text-decoration: none; color: #1a1a1a; border-bottom: 1px solid #f7f7f7;
+    }
+    .notif-item:hover{ background: #fef2f2; }
+    .notif-item .notif-icon{ font-size: 16px; margin-top: 1px; }
+    .notif-item-title{ font-size: 13px; font-weight: 600; }
+    .notif-item-sub{ font-size: 12px; color: #999; margin-top: 1px; }
+    .notif-view-all{
+      display: block; text-align: center; padding: 10px; font-size: 13px;
+      font-weight: 600; color: #dc2626; text-decoration: none;
+    }
+    .notif-view-all:hover{ background: #fef2f2; }
+  </style>
+
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- =========================
+       SIDEBAR
+  ========================== -->
+  <aside class="sidebar">
+
+    <div class="brand">
+      <img
+        src="fynder logo.png"
+        alt="NSCDC Logo"
+        class="brand-logo"
+      >
+
+      <div class="brand-text">
+        <strong>NSCDC</strong>
+        <span>FYNder Agent Platform</span>
+      </div>
+    </div>
+
+
+    <!-- Navigation -->
+    <nav class="nav">
+
+      <a href="dashboard.html" class="nav-link active">
+        <span class="nav-icon">⌂</span>
+        <span>Dashboard</span>
+      </a>
+
+      <a href="agents.html" class="nav-link">
+        <span class="nav-icon">♙</span>
+        <span>Add Agent</span>
+      </a>
+
+      <a href="alerts.html" class="nav-link">
+        <span class="nav-icon">⚠</span>
+        <span>Alert Log</span>
+      </a>
+
+      <a href="tracking.html" class="nav-link">
+        <span class="nav-icon">📡</span>
+        <span>Tracking Sessions</span>
+      </a>
+
+    </nav>
+
+
+    <!-- Sidebar bottom -->
+    <div class="sidebar-bottom">
+
+      <div class="admin-card">
+
+        <div class="avatar">
+          NA
+        </div>
+
+        <div class="admin-info">
+          <strong>NSCDC Admin</strong>
+          <span>Administrator</span>
+        </div>
+
+       
+
+      </div>
+
+      
+        
+      </a>
+
+    </div>
+
+  </aside>
+
+
+
+  <!-- =========================
+       MAIN AREA
+  ========================== -->
+  <main class="main">
+
+    <!-- =========================
+         TOP HEADER
+    ========================== -->
+    <header class="top-header">
+
+      <div class="organization">
+
+        <img
+          src="nscdc-logo.png"
+          alt="NSCDC"
+          class="organization-logo"
+        >
+
+        <div class="organization-text">
+          <strong>Nigeria Security &amp; Civil Defence Corps</strong>
+          <span>FYNder Agent Management</span>
+        </div>
+
+      </div>
+
+
+      <!-- Search -->
+      <div class="top-search">
+        <span class="search-icon">⌕</span>
+        <span>Search anything...</span>
+      </div>
+
+
+      <!-- Notification -->
+      <div class="notification" id="notifBell">
+
+        <span class="notif-bell-icon">🔔</span>
+
+        <span class="notification-badge" id="notifBadge">
+          3
+        </span>
+
+        <div class="notif-menu" id="notifMenu">
+          <div class="notif-menu-header">Recent reports</div>
+          <a class="notif-item" href="alerts.html#ALT-00124">
+            <span class="notif-icon">🏫</span>
+            <div>
+              <div class="notif-item-title">School Attack reported</div>
+              <div class="notif-item-sub">Umuahia North · Critical · 10:42 AM</div>
+            </div>
+          </a>
+          <a class="notif-item" href="alerts.html#ALT-00123">
+            <span class="notif-icon">🧒</span>
+            <div>
+              <div class="notif-item-title">Missing Child reported</div>
+              <div class="notif-item-sub">Aba South · High · 9:17 AM</div>
+            </div>
+          </a>
+          <a class="notif-item" href="alerts.html#ALT-00121">
+            <span class="notif-icon">🏫</span>
+            <div>
+              <div class="notif-item-title">School Attack reported</div>
+              <div class="notif-item-sub">Ohafia · High · 8:30 AM</div>
+            </div>
+          </a>
+          <a class="notif-view-all" href="alerts.html">View all alerts</a>
+        </div>
+
+      </div>
+
+
+      <!-- User -->
+      <div class="top-user" id="topUser">
+
+        <div class="top-avatar">
+          NA
+        </div>
+
+        <span class="top-user-name">
+          NSCDC Admin
+        </span>
+
+        <span class="top-user-arrow">
+          ⌄
+        </span>
+
+        <div class="top-user-menu" id="topUserMenu">
+          <a href="#">⏻ Log out</a>
+        </div>
+
+      </div>
+
+    </header>
+
+
+
+    <!-- =========================
+         PAGE CONTENT
+    ========================== -->
+    <section class="content">
+
+
+      <!-- Page title -->
+      <div class="page-title">
+
+        <div>
+          <h1>Dashboard</h1>
+
+          <p>
+            Monitor and manage NSCDC field agents.
+          </p>
+        </div>
+
+      </div>
+
+
+
+      <!-- =========================
+           STATISTICS
+      ========================== -->
+      <div class="stats-grid">
+
+
+        <!-- Total Agents -->
+        <div class="stat-card stat-red-one">
+
+          <div class="stat-content">
+
+            <span class="stat-label">
+              Total Agents
+            </span>
+
+            <strong class="stat-number">
+              428
+            </strong>
+
+            <span class="stat-description">
+              Registered personnel
+            </span>
+
+          </div>
+
+          <div class="stat-icon">
+            ♙
+          </div>
+
+        </div>
+
+
+
+        <!-- Active Agents -->
+        <div class="stat-card stat-red-two">
+
+          <div class="stat-content">
+
+            <span class="stat-label">
+              Active Agents
+            </span>
+
+            <strong class="stat-number">
+              391
+            </strong>
+
+            <span class="stat-description">
+              Currently active
+            </span>
+
+          </div>
+
+          <div class="stat-icon">
+            ✓
+          </div>
+
+        </div>
+
+
+
+        <!-- Online Agents -->
+        <div class="stat-card stat-red-three">
+
+          <div class="stat-content">
+
+            <span class="stat-label">
+              Agents Online
+            </span>
+
+            <strong class="stat-number">
+              146
+            </strong>
+
+            <span class="stat-description">
+              Currently connected
+            </span>
+
+          </div>
+
+          <div class="stat-icon">
+            ●
+          </div>
+
+        </div>
+
+
+
+        <!-- Attention -->
+        <div class="stat-card stat-red-four">
+
+          <div class="stat-content">
+
+            <span class="stat-label">
+              Needs Attention
+            </span>
+
+            <strong class="stat-number">
+              7
+            </strong>
+
+            <span class="stat-description">
+              Records requiring review
+            </span>
+
+          </div>
+
+          <div class="stat-icon">
+            !
+          </div>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- =========================
+           DASHBOARD LOWER SECTION
+      ========================== -->
+      <div class="dashboard-grid">
+
+
+        <!-- =========================
+             RECENT ACTIVITIES
+        ========================== -->
+        <div class="dashboard-card">
+
+          <div class="card-header">
+
+            <div>
+              <h2>Recent Activities</h2>
+
+              <p>
+                Latest agent and system activity.
+              </p>
+            </div>
+
+          </div>
+
+
+          <!-- Activity 1 -->
+          <div class="activity-row">
+
+            <div class="activity-icon activity-green">
+              ✓
+            </div>
+
+            <div class="activity-content">
+
+              <strong>
+                Nkem Johnson
+              </strong>
+
+              <span>
+                checked in for duty
+              </span>
+
+              <small>
+                Today, 10:42 AM · Umuahia Command
+              </small>
+
+            </div>
+
+          </div>
+
+
+          <!-- Activity 2 -->
+          <div class="activity-row">
+
+            <div class="activity-icon activity-red">
+              ＋
+            </div>
+
+            <div class="activity-content">
+
+              <strong>
+                David Okechukwu
+              </strong>
+
+              <span>
+                was registered as a new agent
+              </span>
+
+              <small>
+                Today, 10:18 AM · NSCDC Admin
+              </small>
+
+            </div>
+
+          </div>
+
+
+          <!-- Activity 3 -->
+          <div class="activity-row">
+
+            <div class="activity-icon activity-amber">
+              !
+            </div>
+
+            <div class="activity-content">
+
+              <strong>
+                Bola Okafor
+              </strong>
+
+              <span>
+                agent record requires review
+              </span>
+
+              <small>
+                Today, 9:51 AM · Personnel Records
+              </small>
+
+            </div>
+
+          </div>
+
+
+          <!-- Activity 4 -->
+          <div class="activity-row">
+
+            <div class="activity-icon activity-green">
+              ●
+            </div>
+
+            <div class="activity-content">
+
+              <strong>
+                Chukwuemeka Obi
+              </strong>
+
+              <span>
+                came online
+              </span>
+
+              <small>
+                Today, 9:27 AM · Field Operations
+              </small>
+
+            </div>
+
+          </div>
+
+
+          <!-- Activity 5 -->
+          <div class="activity-row">
+
+            <div class="activity-icon activity-red">
+              ↻
+            </div>
+
+            <div class="activity-content">
+
+              <strong>
+                Agent NSCDC-1038
+              </strong>
+
+              <span>
+                profile information was updated
+              </span>
+
+              <small>
+                Yesterday, 5:36 PM · Administration
+              </small>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- =========================
+             AGENT STATUS
+        ========================== -->
+        <div class="dashboard-card">
+
+          <div class="card-header">
+
+            <div>
+              <h2>Agent Status</h2>
+
+              <p>
+                Current operational overview.
+              </p>
+            </div>
+
+          </div>
+
+
+          <!-- Active -->
+          <div class="status-row">
+
+            <div class="status-name">
+
+              <span class="status-dot dot-green"></span>
+
+              <span>
+                Active
+              </span>
+
+            </div>
+
+            <strong>
+              391
+            </strong>
+
+          </div>
+
+
+          <!-- Online -->
+          <div class="status-row">
+
+            <div class="status-name">
+
+              <span class="status-dot dot-green"></span>
+
+              <span>
+                Online
+              </span>
+
+            </div>
+
+            <strong>
+              146
+            </strong>
+
+          </div>
+
+
+          <!-- Review -->
+          <div class="status-row">
+
+            <div class="status-name">
+
+              <span class="status-dot dot-amber"></span>
+
+              <span>
+                On Review
+              </span>
+
+            </div>
+
+            <strong>
+              7
+            </strong>
+
+          </div>
+
+
+          <!-- Inactive -->
+          <div class="status-row">
+
+            <div class="status-name">
+
+              <span class="status-dot dot-gray"></span>
+
+              <span>
+                Inactive
+              </span>
+
+            </div>
+
+            <strong>
+              30
+            </strong>
+
+          </div>
+
+
+          <!-- Quick links -->
+          <div class="quick-links">
+
+            <a href="agents.html">
+              ＋ &nbsp; Add Agent
+            </a>
+
+            <a href="agents.html">
+              ♙ &nbsp; Agent List
+            </a>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+</div>
+
+<script>
+  // Security/NSCDC Admin dropdown (header, top-right) — same behavior as agents.html
+  var topUser = document.getElementById("topUser");
+  if (topUser) {
+    topUser.addEventListener("click", function(e){
+      e.stopPropagation();
+      topUser.classList.toggle("open");
+    });
+    // Close it when clicking anywhere else on the page
+    document.addEventListener("click", function(){
+      topUser.classList.remove("open");
+    });
+    // Prevent clicks inside the menu itself from closing it before the link fires
+    var topUserMenu = document.getElementById("topUserMenu");
+    if (topUserMenu) {
+      topUserMenu.addEventListener("click", function(e){ e.stopPropagation(); });
+    }
+  }
+
+  // Notification bell: dropdown + vibrate on new report
+  var notifBell = document.getElementById("notifBell");
+  var notifMenu = document.getElementById("notifMenu");
+  if (notifBell) {
+    notifBell.addEventListener("click", function(e){
+      e.stopPropagation();
+      notifBell.classList.toggle("open");
+    });
+    document.addEventListener("click", function(){
+      notifBell.classList.remove("open");
+    });
+    if (notifMenu) {
+      notifMenu.addEventListener("click", function(e){ e.stopPropagation(); });
+    }
+  }
+
+  function shakeNotifBell(){
+    if (!notifBell) return;
+    notifBell.classList.add("shake");
+    setTimeout(function(){ notifBell.classList.remove("shake"); }, 650);
+  }
+
+  // Simulates a new report coming in. Replace with a real trigger
+  // (e.g. a websocket "new_alert" event) when this connects to a backend.
+  setTimeout(shakeNotifBell, 3000);
+  setInterval(shakeNotifBell, 20000);
+</script>
+
+</body>
+</html>
